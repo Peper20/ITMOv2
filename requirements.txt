@@ -1,0 +1,45 @@
+# Обучающие практики ИТМО - все зависимости для курса
+
+# Практики 1-2: AI Planning & Prompt Engineering (LLM-based)
+# - Использует ChatGPT/Claude/Gemini через API
+# - Дополнительных зависимостей не требуется
+
+# Практика 3: Coding Agents (FastAPI + Cursor AI)
+fastapi==0.104.1
+uvicorn[standard]==0.24.0
+pydantic==2.5.0
+python-multipart==0.0.6
+
+# Практика 4: MCP + Weather API Integration
+httpx==0.25.2
+python-dotenv==1.0.0
+pydantic-settings==2.1.0
+
+# Практика 5: Orchestrators (N8N) - будет добавлено позже
+# Практика 6: AI Testing - будет добавлено позже
+# Практика 7: CI/CD - будет добавлено позже
+# Практика 8: Final Project - будет добавлено позже
+
+# Тестирование (для всех практик)
+pytest>=7.0.0
+pytest-cov>=4.0.0
+pytest-asyncio>=0.21.1
+
+# Линтинг и форматирование кода
+flake8>=6.0.0
+black>=23.0.0
+isort>=5.12.0
+
+# Дополнительные утилиты (опционально для бонусных заданий)
+sqlmodel>=0.0.16  # Для персистентности данных
+websockets>=12.0   # Для WebSocket уведомлений
+click>=8.1.0       # Для CLI утилит
+
+# Образовательные инструменты (для демонстраций)
+numpy>=1.24.0
+pandas>=2.0.0
+matplotlib>=3.7.0
+jupyter>=1.0.0
+ipykernel>=6.0.0
+flask>=2.3.0
+sqlalchemy>=2.0.0
