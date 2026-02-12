@@ -33,7 +33,7 @@
 
 1. Пользователь открывает клиент (Web/Mobile) и выбирает город.
 2. Клиент отправляет запрос на подписку в API (POST /subscribe).
-3. Backend валидирует данные и сохраняет подписку в SQLite.
+3. Backend валидирует данные и сохраняет подписку в PostgreSQL.
 4. По расписанию worker инициирует получение погоды для активных подписок.
 5. Backend запрашивает погоду во внешнем Weather API.
 6. Backend формирует сообщение и отправляет нотификацию (канал зависит от клиента).
@@ -43,7 +43,7 @@
 ### Roadmap
 
 ## v1.0 (минимальный слайс, 1–2 дня)
-- CRUD подписок: создать/удалить/посмотреть список (SQLite)
+- CRUD подписок: создать/удалить/посмотреть список (PostgreSQL)
 - Получение текущей погоды по городу (через внешнее API)
 - Базовые контракты ошибок (валидация, city not found, external timeout)
 
@@ -91,9 +91,9 @@
 ### Компоненты
 
 1. **FastAPI Backend:** REST API эндпоинты (/subscribe, /weather, /subscriptions).
-2. **Subscription Service:** Логика управления подписками (CRUD) с SQLite.
+2. **Subscription Service:** Логика управления подписками (CRUD) с PostgreSQL.
 3. **Weather Service:** Асинхронный клиент к OpenWeatherMap API.
-4. **SQLite Database:** Хранение users и subscriptions (таблицы: users, subscriptions).
+4. **PostgreSQL Database:** Хранение users и subscriptions (таблицы: users, subscriptions).
 5. **Client Applications:** Веб/мобильные приложения, взаимодействующие с API.
 
 
@@ -105,16 +105,16 @@
 
 ## Решение
 Выбираем монолитный Backend на FastAPI с выделением сервисов (Subscription/Weather) внутри приложения.
-Храним подписки в SQLite. Для v1.0 делаем только API-контракты и ручные вызовы получения погоды.
+Храним подписки в PostgreSQL. Для v1.0 делаем только API-контракты и ручные вызовы получения погоды.
 Периодические уведомления выносим в v1.1 (scheduler/worker).
 
 ## Альтернативы
 - Микросервисы + очередь: избыточно для v1.0.
-- Postgres вместо SQLite: лучше для продакшена, но увеличивает накладные расходы на v1.0.
+- SQLite вместо PostgreSQL: проще для локальной разработки, но ограничения масштабируемости.
 
 ## Последствия / Trade-offs
-- Плюсы: быстро, просто, легко тестировать.
-- Минусы: ограничения SQLite и масштабируемости; придётся эволюционировать при росте нагрузки.
+- Плюсы: готово к продакшену, хорошая масштабируемость, поддержка транзакций.
+- Минусы: требует настройки и управления базой данных; для простых случаев может быть избыточно.
 
 
 ### PlantUML
@@ -129,7 +129,7 @@ package "Backend (FastAPI)" {
   [Weather Service] as weather
 }
 
-database "SQLite" as db
+database "PostgreSQL" as db
 cloud "OpenWeatherMap API" as api
 
 client -> router : POST /subscribe {city, email}
@@ -185,7 +185,7 @@ router --> client : JSON response
 1) Title: POST /subscribe — создать подписку
    Description: Создать подписку на город для пользователя (email/city).
    Acceptance Criteria:
-   - Given валидные email/city, When POST /subscribe, Then 201 Created и запись в SQLite.
+   - Given валидные email/city, When POST /subscribe, Then 201 Created и запись в PostgreSQL.
    - Given невалидный email, Then 422 Unprocessable Entity.
    Test cases:
    - Positive: валидные данные
@@ -237,7 +237,7 @@ LLD (сильно упрощённый пример):
   - `list_subscriptions() -> list[Subscription]`
 - Модуль `weather_client`:
   - `get_current_weather(city: str) -> WeatherDTO`
-- Схема SQLite:
+- Схема PostgreSQL:
   - table subscriptions(id TEXT PK, email TEXT, city TEXT, created_at TEXT)
 - Контракты ошибок:
   - 422 для валидации
@@ -267,7 +267,7 @@ LLD (сильно упрощённый пример):
 6. Невалидный email формат.
 7. Одновременные запросы на подписку (race condition).
 8. Дубликаты подписок (идемпотентность).
-9. SQLite locked (конкурентный доступ).
+9. PostgreSQL connection pool exhaustion (конкурентный доступ).
 10. Очень длинное название города (>100 символов).
 
 
@@ -283,7 +283,7 @@ Task: Provide a light event storming (Actors/Commands/Domain Events), CJM (6–8
 ---
 **Задача:** 2.2 ADR + PlantUML (ChatGPT-4)
 > Role: You are a Solution Architect.
-Context: WeatherService REST API. Components: Client (Web/Mobile), Backend (FastAPI), DB (SQLite), External Weather API (OpenWeatherMap).
+Context: WeatherService REST API. Components: Client (Web/Mobile), Backend (FastAPI), DB (PostgreSQL), External Weather API (OpenWeatherMap).
 Constraints: v1.0 must be doable in 1–2 days; external API can fail.
 Task: Write a short ADR (Context/Decision/Alternatives/Consequences) and generate PlantUML component diagram with v1.0 endpoints.
 
@@ -300,7 +300,7 @@ Task: Provide DoR and DoD checklists, a test plan (min 8 cases, incl. negative s
 
 ## 6. Рефлексия
 
-**Инсайт:** AI отлично справляется с генерацией boilerplate (DoD, DoR) и переводом концепций из Telegram-бота в REST API. Важно четко указывать технологии (FastAPI, SQLite).
+**Инсайт:** AI отлично справляется с генерацией boilerplate (DoD, DoR) и переводом концепций из Telegram-бота в REST API. Важно четко указывать технологии (FastAPI, PostgreSQL).
 
-**Критика AI:** PlantUML сгенерировался с ошибкой синтаксиса в первый раз (забыл закрыть @enduml), пришлось просить исправить. При указании SQLite вместо Postgres AI правильно адаптировал примеры.
+**Критика AI:** PlantUML сгенерировался с ошибкой синтаксиса в первый раз (забыл закрыть @enduml), пришлось просить исправить. При указании PostgreSQL AI правильно адаптировал примеры для работы с реляционной БД.
 

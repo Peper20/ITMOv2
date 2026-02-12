@@ -51,8 +51,8 @@ PROMPT_LOGS: List[RCTF_Log] = [
 
 # Задание 1: Улучшенная Архитектура (Mermaid v2)
 MERMAID_V2 = """
-TODO: Вставьте улучшенный Mermaid код (с деталями протоколов, Redis кэш, SQLite)
-Должно включать: Client Apps → FastAPI Backend → Redis Cache → SQLite DB → OpenWeatherMap API
+TODO: Вставьте улучшенный Mermaid код (с деталями протоколов, Redis кэш, PostgreSQL)
+Должно включать: Client Apps → FastAPI Backend → Redis Cache → PostgreSQL DB → OpenWeatherMap API
 """
 
 # Задание 2: Gherkin Scenarios (BDD)

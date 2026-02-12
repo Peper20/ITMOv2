@@ -100,7 +100,7 @@ TODO: Вставьте чек-лист DoR
 ARCHITECTURE_COMPONENTS = """
 TODO: Список компонентов
 1. FastAPI Backend (REST API)
-2. SQLite Database (подписки пользователей)
+2. PostgreSQL Database (подписки пользователей)
 3. OpenWeatherMap API (данные о погоде)
 4. Client Apps (веб/мобильные приложения)
 """
@@ -123,7 +123,7 @@ TODO: Вставьте ADR.
 # Задание 2 (часть 3): Mermaid код (архитектурная схема REST API сервиса)
 MERMAID_CODE = """
 TODO: Код диаграммы (```mermaid ... ```)
-Должна включать: Client → FastAPI Backend → SQLite DB → Weather API
+Должна включать: Client → FastAPI Backend → PostgreSQL DB → Weather API
 """
 
 # Опционально: ссылка/путь на изображение схемы (если сохраняли PNG в репозиторий)
