@@ -53,6 +53,7 @@
 | LLM для планирования | Архитектурная схема (PlantUML) |
 
 **Лекция:** [Введение. Из чего состоит ежедневная работа инженер](https://docs.google.com/presentation/d/1orv8ykVyddCL7GUVXt4tn4EkIUBKNTrN/edit?usp=sharing&ouid=106849717642670596637&rtpof=true&sd=true)
+
 **Практика:** [Practice 01 - AI Planning Tools](practices/practice_01/)
 
 ---
