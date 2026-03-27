@@ -53,6 +53,7 @@
 | LLM для планирования | Архитектурная схема (PlantUML) |
 
 **Практика:** [Practice 01 - AI Planning Tools](practices/practice_01/)
+[Запись лекции и практики №1](https://avito.ktalk.ru/recordings/XeUXELkm3rBcgxf4xIHX)
 
 ---
 
@@ -67,7 +68,7 @@
 | Критика через роль | Улучшенный test plan |
 
 **Практика:** [Practice 02 - Professional Prompting](practices/practice_02/)
-
+[Запись лекции и практики №2](https://avito.ktalk.ru/recordings/dn7CJ8krVJVrslSwSGa9)
 ---
 
 ### Неделя 3: Приёмка лабораторных работ
@@ -85,6 +86,8 @@
 | Цикл: Контекст → Задача → Ревью → Уточнение | In-memory database |
 
 **Практика:** [Practice 03 - Coding Agents Management](practices/practice_03/)
+[Запись лекции №3](https://avito.ktalk.ru/recordings/Z6FHS0jXz4lzRfE7JjfK)
+[Запись практики №3](https://avito.ktalk.ru/recordings/W7T7VNY4dslElLqz4Mmr)
 
 ---
 
@@ -99,6 +102,7 @@
 | AI-аудит и рефакторинг по правилам | Упорядочивание структуры, обновление интерфейсов, устранение расхождений |
 
 **Практика:** [Practice 04 - External API Integration](practices/practice_04/)
+[Запись лекции и практики №4](https://avito.ktalk.ru/recordings/Ss7dINd8aDWTuRQ8ffwG)
 
 ---
 
@@ -118,6 +122,8 @@
 | Новые режимы работы (планирование/имплементация/и т.п.) | Упорядочиваем процесс «контекст → задача → ревью → уточнение» |
 
 **Практика:** Practice 05 - Spec-driven Development & Refactoring (в разработке)
+[Запись лекции №5](https://drive.google.com/file/d/1iNmkk6nApr6gAZJIspQo7QB5AZubF4Sy/view?usp=sharing)
+[Запись практики №5](https://avito.ktalk.ru/recordings/8ohvVxzSo97FqfwyOfkX)
 
 ---
 
