@@ -91,6 +91,7 @@
 **Практика:** [Practice 03 - Coding Agents Management](practices/practice_03/)
 
 **[Запись лекции №3](https://avito.ktalk.ru/recordings/Z6FHS0jXz4lzRfE7JjfK)**
+
 **[Запись практики №3](https://avito.ktalk.ru/recordings/W7T7VNY4dslElLqz4Mmr)**
 
 ---
@@ -127,8 +128,10 @@
 | Новые режимы работы (планирование/имплементация/и т.п.) | Упорядочиваем процесс «контекст → задача → ревью → уточнение» |
 
 **Практика:** Practice 05 - Spec-driven Development & Refactoring (в разработке)
-[Запись лекции №5](https://drive.google.com/file/d/1iNmkk6nApr6gAZJIspQo7QB5AZubF4Sy/view?usp=sharing)
-[Запись практики №5](https://avito.ktalk.ru/recordings/8ohvVxzSo97FqfwyOfkX)
+
+**[Запись лекции №5](https://drive.google.com/file/d/1iNmkk6nApr6gAZJIspQo7QB5AZubF4Sy/view?usp=sharing)**
+
+**[Запись практики №5](https://avito.ktalk.ru/recordings/8ohvVxzSo97FqfwyOfkX)**
 
 ---
 
