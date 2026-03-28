@@ -1,0 +1,1387 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Git Worktree + Claude Code — Интерактивный туториал</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Outfit:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0a0f;
+    --surface: #12121a;
+    --surface2: #1a1a26;
+    --surface3: #222233;
+    --border: #2a2a3a;
+    --text: #e8e8f0;
+    --text-dim: #7a7a90;
+    --accent: #f97316;
+    --accent2: #06b6d4;
+    --accent3: #a855f7;
+    --accent4: #22c55e;
+    --accent5: #f43f5e;
+    --mono: 'JetBrains Mono', monospace;
+    --sans: 'Outfit', sans-serif;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--sans);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* ---- PROGRESS BAR ---- */
+  .progress-bar {
+    position: fixed;
+    top: 0; left: 0; right: 0;
+    height: 3px;
+    background: var(--surface2);
+    z-index: 100;
+  }
+
+  .progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--accent), var(--accent3));
+    transition: width 0.5s ease;
+    width: 0%;
+  }
+
+  /* ---- NAV ---- */
+  .top-nav {
+    position: fixed;
+    top: 3px; left: 0; right: 0;
+    background: rgba(10,10,15,0.92);
+    backdrop-filter: blur(16px);
+    border-bottom: 1px solid var(--border);
+    z-index: 99;
+    padding: 12px 24px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .nav-title {
+    font-family: var(--mono);
+    font-size: 13px;
+    color: var(--text-dim);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .nav-title .dot {
+    width: 6px; height: 6px;
+    background: var(--accent4);
+    border-radius: 50%;
+    animation: pulse 2s infinite;
+  }
+
+  .nav-steps {
+    display: flex;
+    gap: 4px;
+  }
+
+  .nav-step {
+    width: 32px;
+    height: 6px;
+    border-radius: 3px;
+    background: var(--surface2);
+    cursor: pointer;
+    transition: all 0.3s ease;
+  }
+
+  .nav-step.active {
+    background: var(--accent);
+    width: 48px;
+  }
+
+  .nav-step.done {
+    background: var(--accent4);
+  }
+
+  .nav-step:hover {
+    opacity: 0.8;
+  }
+
+  .nav-counter {
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--text-dim);
+  }
+
+  /* ---- MAIN ---- */
+  .container {
+    max-width: 860px;
+    margin: 0 auto;
+    padding: 80px 24px 160px;
+  }
+
+  /* ---- STEP ---- */
+  .step {
+    display: none;
+    animation: fadeIn 0.5s ease;
+  }
+
+  .step.active {
+    display: block;
+  }
+
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(16px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .step-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-family: var(--mono);
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    color: var(--accent);
+    margin-bottom: 20px;
+    padding: 4px 12px;
+    border: 1px solid rgba(249,115,22,0.3);
+    border-radius: 100px;
+  }
+
+  .step h1 {
+    font-size: clamp(28px, 5vw, 44px);
+    font-weight: 800;
+    line-height: 1.15;
+    letter-spacing: -0.03em;
+    margin-bottom: 20px;
+  }
+
+  .step h1 .hl {
+    background: linear-gradient(135deg, var(--accent), var(--accent5));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .step h1 .hl2 {
+    background: linear-gradient(135deg, var(--accent2), var(--accent3));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .step-text {
+    font-size: 17px;
+    color: var(--text-dim);
+    line-height: 1.75;
+    max-width: 640px;
+    margin-bottom: 32px;
+    font-weight: 300;
+  }
+
+  .step-text strong {
+    color: var(--text);
+    font-weight: 500;
+  }
+
+  .step-text code {
+    font-family: var(--mono);
+    font-size: 14px;
+    color: var(--accent2);
+    background: var(--surface2);
+    padding: 2px 8px;
+    border-radius: 4px;
+  }
+
+  /* ---- INTERACTIVE ELEMENTS ---- */
+
+  /* Folder explorer */
+  .folder-explorer {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    overflow: hidden;
+    margin-bottom: 24px;
+  }
+
+  .folder-explorer-header {
+    padding: 12px 20px;
+    background: var(--surface2);
+    border-bottom: 1px solid var(--border);
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--text-dim);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .folder-item {
+    padding: 12px 20px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-family: var(--mono);
+    font-size: 13px;
+    border-bottom: 1px solid rgba(42,42,58,0.5);
+    cursor: pointer;
+    transition: all 0.2s ease;
+    position: relative;
+  }
+
+  .folder-item:last-child { border-bottom: none; }
+
+  .folder-item:hover {
+    background: var(--surface2);
+  }
+
+  .folder-item.highlight {
+    background: rgba(249,115,22,0.08);
+    border-left: 3px solid var(--accent);
+  }
+
+  .folder-item .icon {
+    font-size: 16px;
+    width: 20px;
+    text-align: center;
+  }
+
+  .folder-item .name { color: var(--text); }
+
+  .folder-item .meta {
+    margin-left: auto;
+    font-size: 11px;
+    color: var(--text-dim);
+    opacity: 0.6;
+  }
+
+  .folder-item .branch-tag {
+    margin-left: auto;
+    font-size: 10px;
+    padding: 2px 8px;
+    border-radius: 100px;
+    font-weight: 600;
+  }
+
+  .branch-main { background: rgba(249,115,22,0.15); color: var(--accent); }
+  .branch-feature { background: rgba(6,182,212,0.15); color: var(--accent2); }
+  .branch-fix { background: rgba(168,85,247,0.15); color: var(--accent3); }
+
+  .folder-item .tooltip {
+    display: none;
+    position: absolute;
+    left: 50%;
+    bottom: calc(100% + 8px);
+    transform: translateX(-50%);
+    background: var(--surface3);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 8px 14px;
+    font-size: 12px;
+    color: var(--text);
+    white-space: nowrap;
+    z-index: 10;
+    font-family: var(--sans);
+  }
+
+  .folder-item:hover .tooltip {
+    display: block;
+  }
+
+  /* Live terminal */
+  .live-terminal {
+    background: #0d0d14;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    overflow: hidden;
+    margin-bottom: 24px;
+  }
+
+  .live-terminal-header {
+    padding: 10px 16px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+  }
+
+  .term-dots {
+    display: flex; gap: 5px;
+  }
+
+  .term-dots span {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    opacity: 0.7;
+  }
+
+  .term-dots span:nth-child(1) { background: var(--accent5); }
+  .term-dots span:nth-child(2) { background: var(--accent); }
+  .term-dots span:nth-child(3) { background: var(--accent4); }
+
+  .term-tab {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--text-dim);
+    padding: 2px 10px;
+    border-radius: 4px;
+    background: var(--surface2);
+  }
+
+  .live-terminal-body {
+    padding: 16px 20px;
+    font-family: var(--mono);
+    font-size: 13px;
+    line-height: 1.9;
+    min-height: 120px;
+  }
+
+  .term-line {
+    opacity: 0;
+    transform: translateY(4px);
+    transition: all 0.3s ease;
+  }
+
+  .term-line.visible {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  .term-prompt { color: var(--accent4); }
+  .term-cmd { color: var(--text); }
+  .term-output { color: var(--text-dim); opacity: 0.7; }
+  .term-comment { color: #555568; font-style: italic; }
+  .term-flag { color: var(--accent); }
+  .term-str { color: var(--accent4); }
+  .term-kw { color: var(--accent3); }
+
+  .type-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 24px;
+    background: var(--accent);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-family: var(--mono);
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    margin-top: 12px;
+  }
+
+  .type-btn:hover {
+    background: #ea6c0e;
+    transform: translateY(-1px);
+  }
+
+  .type-btn:disabled {
+    opacity: 0.4;
+    cursor: default;
+    transform: none;
+  }
+
+  .type-btn .icon { font-size: 14px; }
+
+  /* Comparison interactive */
+  .compare-container {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    margin-bottom: 24px;
+  }
+
+  @media (max-width: 640px) {
+    .compare-container { grid-template-columns: 1fr; }
+  }
+
+  .compare-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 24px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .compare-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 3px;
+  }
+
+  .compare-card.old::before { background: var(--accent5); }
+  .compare-card.new::before { background: var(--accent4); }
+
+  .compare-label {
+    font-family: var(--mono);
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.15em;
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .compare-card.old .compare-label { color: var(--accent5); }
+  .compare-card.new .compare-label { color: var(--accent4); }
+
+  .task-block {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 14px;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    font-size: 13px;
+    margin-bottom: 8px;
+    transition: all 0.4s ease;
+    opacity: 0;
+    transform: translateX(-8px);
+  }
+
+  .task-block.show {
+    opacity: 1;
+    transform: translateX(0);
+  }
+
+  .task-block .task-icon {
+    font-size: 14px;
+    width: 20px;
+    text-align: center;
+    flex-shrink: 0;
+  }
+
+  .task-block .task-text {
+    font-family: var(--mono);
+    font-size: 12px;
+    color: var(--text-dim);
+  }
+
+  .task-block.waiting {
+    border-color: rgba(122,122,144,0.3);
+  }
+
+  .task-block.running {
+    border-color: var(--accent2);
+    background: rgba(6,182,212,0.05);
+  }
+
+  .task-block.done {
+    border-color: var(--accent4);
+    background: rgba(34,197,94,0.05);
+  }
+
+  .task-block.done .task-icon::after { content: '✓'; color: var(--accent4); }
+
+  .compare-timer {
+    text-align: center;
+    font-family: var(--mono);
+    font-size: 24px;
+    font-weight: 700;
+    margin-top: 16px;
+    padding-top: 16px;
+    border-top: 1px solid var(--border);
+  }
+
+  .compare-card.old .compare-timer { color: var(--accent5); }
+  .compare-card.new .compare-timer { color: var(--accent4); }
+
+  /* Alias interactive */
+  .alias-demo {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 32px;
+    text-align: center;
+    margin-bottom: 24px;
+  }
+
+  .alias-keys {
+    display: flex;
+    justify-content: center;
+    gap: 16px;
+    margin-bottom: 24px;
+  }
+
+  .alias-key-btn {
+    width: 72px;
+    height: 72px;
+    border-radius: 12px;
+    border: 2px solid var(--border);
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--mono);
+    font-size: 24px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+  }
+
+  .alias-key-btn:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+  }
+
+  .alias-key-btn:active, .alias-key-btn.pressed {
+    transform: translateY(2px);
+    box-shadow: none;
+  }
+
+  .alias-key-btn:nth-child(1).pressed { border-color: var(--accent); color: var(--accent); background: rgba(249,115,22,0.1); }
+  .alias-key-btn:nth-child(2).pressed { border-color: var(--accent2); color: var(--accent2); background: rgba(6,182,212,0.1); }
+  .alias-key-btn:nth-child(3).pressed { border-color: var(--accent3); color: var(--accent3); background: rgba(168,85,247,0.1); }
+
+  .alias-result {
+    background: #0d0d14;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 16px 20px;
+    font-family: var(--mono);
+    font-size: 13px;
+    line-height: 1.8;
+    text-align: left;
+    min-height: 80px;
+    transition: all 0.3s ease;
+  }
+
+  .alias-hint {
+    font-size: 13px;
+    color: var(--text-dim);
+    margin-bottom: 20px;
+  }
+
+  /* ---- BOTTOM NAV ---- */
+  .bottom-nav {
+    position: fixed;
+    bottom: 0; left: 0; right: 0;
+    background: rgba(10,10,15,0.95);
+    backdrop-filter: blur(16px);
+    border-top: 1px solid var(--border);
+    padding: 14px 24px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    z-index: 99;
+  }
+
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 24px;
+    border-radius: 8px;
+    font-family: var(--sans);
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    border: none;
+  }
+
+  .btn:hover { transform: translateY(-1px); }
+
+  .btn-prev {
+    background: var(--surface2);
+    color: var(--text-dim);
+    border: 1px solid var(--border);
+  }
+
+  .btn-prev:hover { border-color: #3a3a4a; color: var(--text); }
+
+  .btn-next {
+    background: var(--accent);
+    color: white;
+    font-weight: 600;
+  }
+
+  .btn-next:hover { background: #ea6c0e; }
+
+  .btn-next.finish {
+    background: var(--accent4);
+  }
+
+  .btn-next.finish:hover {
+    background: #1aab4a;
+  }
+
+  .btn:disabled {
+    opacity: 0.3;
+    cursor: default;
+    transform: none;
+  }
+
+  .bottom-hint {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--text-dim);
+    opacity: 0.6;
+  }
+
+  /* ---- QUIZ ---- */
+  .quiz {
+    margin-bottom: 24px;
+  }
+
+  .quiz-question {
+    font-size: 17px;
+    font-weight: 500;
+    margin-bottom: 16px;
+  }
+
+  .quiz-options {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .quiz-option {
+    padding: 14px 20px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    font-size: 14px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .quiz-option:hover {
+    border-color: #3a3a4a;
+    background: var(--surface2);
+  }
+
+  .quiz-option .letter {
+    width: 28px;
+    height: 28px;
+    border-radius: 6px;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: var(--mono);
+    font-size: 12px;
+    font-weight: 700;
+    flex-shrink: 0;
+  }
+
+  .quiz-option.correct {
+    border-color: var(--accent4);
+    background: rgba(34,197,94,0.08);
+  }
+
+  .quiz-option.correct .letter {
+    border-color: var(--accent4);
+    color: var(--accent4);
+  }
+
+  .quiz-option.wrong {
+    border-color: var(--accent5);
+    background: rgba(244,63,94,0.08);
+    opacity: 0.6;
+  }
+
+  .quiz-option.disabled {
+    pointer-events: none;
+  }
+
+  .quiz-feedback {
+    margin-top: 16px;
+    padding: 16px 20px;
+    border-radius: 10px;
+    font-size: 14px;
+    line-height: 1.6;
+    display: none;
+  }
+
+  .quiz-feedback.show { display: block; }
+
+  .quiz-feedback.success {
+    background: rgba(34,197,94,0.08);
+    border: 1px solid rgba(34,197,94,0.3);
+    color: var(--accent4);
+  }
+
+  .quiz-feedback.fail {
+    background: rgba(244,63,94,0.08);
+    border: 1px solid rgba(244,63,94,0.3);
+    color: var(--accent5);
+  }
+
+  /* ---- FINAL ---- */
+  .final-card {
+    background: linear-gradient(135deg, rgba(249,115,22,0.1), rgba(168,85,247,0.1));
+    border: 1px solid rgba(249,115,22,0.25);
+    border-radius: 20px;
+    padding: 48px 32px;
+    text-align: center;
+  }
+
+  .final-emoji { font-size: 48px; margin-bottom: 16px; }
+
+  .final-card h2 {
+    font-size: 28px;
+    font-weight: 800;
+    margin-bottom: 12px;
+  }
+
+  .final-card p {
+    color: var(--text-dim);
+    font-size: 16px;
+    max-width: 500px;
+    margin: 0 auto 32px;
+    line-height: 1.7;
+  }
+
+  .checklist {
+    text-align: left;
+    max-width: 400px;
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .checklist-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-size: 14px;
+    font-family: var(--mono);
+    color: var(--text-dim);
+  }
+
+  .checklist-item .check {
+    color: var(--accent4);
+    font-size: 16px;
+  }
+
+  /* ---- ANIMATIONS ---- */
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.3; }
+  }
+
+  @keyframes blink {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0; }
+  }
+
+  .cursor-blink::after {
+    content: '▋';
+    animation: blink 1.2s step-end infinite;
+    color: var(--accent4);
+    margin-left: 2px;
+  }
+
+  @keyframes slideRight {
+    from { transform: translateX(-100%); }
+    to { transform: translateX(0); }
+  }
+
+  /* Keyboard hints */
+  .kbd {
+    display: inline-flex;
+    align-items: center;
+    padding: 2px 8px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--text-dim);
+  }
+</style>
+</head>
+<body>
+
+<!-- PROGRESS -->
+<div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
+
+<!-- TOP NAV -->
+<div class="top-nav">
+  <div class="nav-title"><span class="dot"></span> git worktree + claude code</div>
+  <div class="nav-steps" id="navSteps"></div>
+  <div class="nav-counter" id="navCounter">1 / 6</div>
+</div>
+
+<!-- MAIN -->
+<div class="container">
+
+  <!-- STEP 0: Intro -->
+  <div class="step active" data-step="0">
+    <div class="step-badge">Начнём с простого</div>
+    <h1>Представь: у тебя <span class="hl">одна папка</span> с проектом</h1>
+    <div class="step-text">
+      Обычно проект лежит в одной директории. Хочешь переключиться на другую ветку — делаешь <code>git checkout</code>. Но при этом <strong>все файлы меняются</strong>. Нельзя одновременно работать над фичей и фиксить баг.
+    </div>
+
+    <div class="folder-explorer">
+      <div class="folder-explorer-header">📁 ~/projects/</div>
+      <div class="folder-item highlight">
+        <span class="icon">📂</span>
+        <span class="name">my-project/</span>
+        <span class="branch-tag branch-main">main</span>
+        <div class="tooltip">Единственная рабочая директория</div>
+      </div>
+    </div>
+
+    <div class="step-text" style="margin-top:16px;">
+      Хочешь поработать над <code>feature/auth</code>? Переключаешься — и <strong>весь контекст теряется</strong>. Билд сбрасывается, открытые файлы пропадают. Знакомо?
+    </div>
+  </div>
+
+  <!-- STEP 1: Worktree concept -->
+  <div class="step" data-step="1">
+    <div class="step-badge">Решение</div>
+    <h1>Git Worktree — <span class="hl2">несколько папок,</span> один репо</h1>
+    <div class="step-text">
+      Worktree создаёт <strong>отдельную физическую папку</strong> для каждой ветки. Все папки шарят один <code>.git</code> — коммиты и история общие, но файлы полностью независимы.
+    </div>
+
+    <div class="folder-explorer">
+      <div class="folder-explorer-header">📁 ~/projects/ — после создания worktrees</div>
+      <div class="folder-item" style="cursor:default">
+        <span class="icon">📂</span>
+        <span class="name">my-project/</span>
+        <span class="branch-tag branch-main">main</span>
+        <div class="tooltip">Основная директория — стабильный код</div>
+      </div>
+      <div class="folder-item" style="cursor:default">
+        <span class="icon">📂</span>
+        <span class="name">my-project-auth/</span>
+        <span class="branch-tag branch-feature">feature/auth</span>
+        <div class="tooltip">Worktree — отдельная папка, свои файлы</div>
+      </div>
+      <div class="folder-item" style="cursor:default">
+        <span class="icon">📂</span>
+        <span class="name">my-project-fix/</span>
+        <span class="branch-tag branch-fix">fix/login-bug</span>
+        <div class="tooltip">Worktree — можно параллельно собирать и тестить</div>
+      </div>
+      <div class="folder-item" style="cursor:default;opacity:0.5">
+        <span class="icon">🔗</span>
+        <span class="name" style="color:var(--text-dim)">.git (общий)</span>
+        <span class="meta">коммиты, stash, reflog — общие</span>
+      </div>
+    </div>
+
+    <div class="step-text" style="margin-top:20px">
+      Каждая папка — это <strong>полноценная рабочая среда</strong>. Можно одновременно открыть три терминала, три VS Code, три билда.
+    </div>
+  </div>
+
+  <!-- STEP 2: Commands -->
+  <div class="step" data-step="2">
+    <div class="step-badge">Попробуй сам</div>
+    <h1>Команды для <span class="hl">создания</span> worktree</h1>
+    <div class="step-text">
+      Нажми кнопку, чтобы «выполнить» каждую команду и увидеть результат.
+    </div>
+
+    <div class="live-terminal">
+      <div class="live-terminal-header">
+        <div class="term-dots"><span></span><span></span><span></span></div>
+        <div class="term-tab">terminal</div>
+      </div>
+      <div class="live-terminal-body" id="cmdTerminal">
+        <div class="term-line visible">
+          <span class="term-prompt">~/my-project $</span> <span class="cursor-blink"></span>
+        </div>
+      </div>
+    </div>
+
+    <div style="display:flex;flex-wrap:wrap;gap:8px">
+      <button class="type-btn" onclick="runCommand(0)" id="cmdBtn0">
+        <span class="icon">▶</span> git worktree add
+      </button>
+      <button class="type-btn" onclick="runCommand(1)" id="cmdBtn1" disabled>
+        <span class="icon">▶</span> git worktree list
+      </button>
+      <button class="type-btn" onclick="runCommand(2)" id="cmdBtn2" disabled>
+        <span class="icon">▶</span> git worktree remove
+      </button>
+    </div>
+  </div>
+
+  <!-- STEP 3: Comparison animation -->
+  <div class="step" data-step="3">
+    <div class="step-badge">Сравнение</div>
+    <h1>Последовательно <span class="hl">vs</span> Параллельно</h1>
+    <div class="step-text">
+      Нажми «Запустить», чтобы увидеть разницу в реальном времени.
+    </div>
+
+    <div class="compare-container">
+      <div class="compare-card old">
+        <div class="compare-label">🐌 Без worktree — последовательно</div>
+        <div id="seqTasks">
+          <div class="task-block" data-i="0"><span class="task-icon">⏳</span><span class="task-text">Рефакторинг auth</span></div>
+          <div class="task-block" data-i="1"><span class="task-icon">⏳</span><span class="task-text">Проверка результата</span></div>
+          <div class="task-block" data-i="2"><span class="task-icon">⏳</span><span class="task-text">Написание тестов</span></div>
+          <div class="task-block" data-i="3"><span class="task-icon">⏳</span><span class="task-text">Проверка результата</span></div>
+          <div class="task-block" data-i="4"><span class="task-icon">⏳</span><span class="task-text">Багфикс login</span></div>
+          <div class="task-block" data-i="5"><span class="task-icon">⏳</span><span class="task-text">Проверка результата</span></div>
+        </div>
+        <div class="compare-timer" id="seqTimer">0:00</div>
+      </div>
+      <div class="compare-card new">
+        <div class="compare-label">⚡ С worktrees — параллельно</div>
+        <div id="parTasks">
+          <div class="task-block" data-i="0"><span class="task-icon">⏳</span><span class="task-text">Рефакторинг auth</span></div>
+          <div class="task-block" data-i="1"><span class="task-icon">⏳</span><span class="task-text">Написание тестов</span></div>
+          <div class="task-block" data-i="2"><span class="task-icon">⏳</span><span class="task-text">Багфикс login</span></div>
+          <div class="task-block" data-i="3"><span class="task-icon">⏳</span><span class="task-text">Проверка auth</span></div>
+          <div class="task-block" data-i="4"><span class="task-icon">⏳</span><span class="task-text">Проверка тестов</span></div>
+          <div class="task-block" data-i="5"><span class="task-icon">⏳</span><span class="task-text">Проверка багфикса</span></div>
+        </div>
+        <div class="compare-timer" id="parTimer">0:00</div>
+      </div>
+    </div>
+
+    <button class="type-btn" onclick="startRace()" id="raceBtn">
+      <span class="icon">▶</span> Запустить сравнение
+    </button>
+  </div>
+
+  <!-- STEP 4: Quiz -->
+  <div class="step" data-step="4">
+    <div class="step-badge">Проверь себя</div>
+    <h1>Быстрый <span class="hl2">квиз</span></h1>
+
+    <div class="quiz" id="quiz1">
+      <div class="quiz-question">Что происходит с .git при создании worktree?</div>
+      <div class="quiz-options">
+        <div class="quiz-option" onclick="answer(this, false, 'quiz1')">
+          <span class="letter">A</span> Создаётся полная копия репозитория
+        </div>
+        <div class="quiz-option" onclick="answer(this, true, 'quiz1')">
+          <span class="letter">B</span> Все worktrees шарят один .git
+        </div>
+        <div class="quiz-option" onclick="answer(this, false, 'quiz1')">
+          <span class="letter">C</span> Каждый worktree получает свой .git
+        </div>
+      </div>
+      <div class="quiz-feedback success" id="quiz1-ok">Верно! Один .git на все worktrees — история, stash и reflog общие. Это экономит место и упрощает синхронизацию.</div>
+      <div class="quiz-feedback fail" id="quiz1-fail">Не совсем. На самом деле все worktrees шарят один .git — это ключевое отличие от клонирования репо.</div>
+    </div>
+
+    <div class="quiz" id="quiz2" style="margin-top:32px">
+      <div class="quiz-question">Зачем открывать Claude Code в каждом worktree отдельно?</div>
+      <div class="quiz-options">
+        <div class="quiz-option" onclick="answer(this, false, 'quiz2')">
+          <span class="letter">A</span> Claude Code не поддерживает несколько веток
+        </div>
+        <div class="quiz-option" onclick="answer(this, false, 'quiz2')">
+          <span class="letter">B</span> Для красивого логирования
+        </div>
+        <div class="quiz-option" onclick="answer(this, true, 'quiz2')">
+          <span class="letter">C</span> Каждая сессия работает со своими файлами и не мешает другим
+        </div>
+      </div>
+      <div class="quiz-feedback success" id="quiz2-ok">Правильно! Claude Code работает в контексте текущей директории. Отдельный worktree = отдельные файлы = независимая AI-сессия.</div>
+      <div class="quiz-feedback fail" id="quiz2-fail">Не совсем. Главная причина — каждая сессия работает в своей директории с отдельными файлами, не мешая другим.</div>
+    </div>
+  </div>
+
+  <!-- STEP 5: Aliases + final -->
+  <div class="step" data-step="5">
+    <div class="step-badge">Бонус: алиасы</div>
+    <h1>Переключайся <span class="hl">одной клавишей</span></h1>
+    <div class="step-text">
+      Нажми на клавишу, чтобы увидеть, что произойдёт в терминале.
+    </div>
+
+    <div class="alias-demo">
+      <div class="alias-hint">Нажми на клавишу ↓</div>
+      <div class="alias-keys">
+        <button class="alias-key-btn" onclick="pressAlias(0)">za</button>
+        <button class="alias-key-btn" onclick="pressAlias(1)">zb</button>
+        <button class="alias-key-btn" onclick="pressAlias(2)">zc</button>
+      </div>
+      <div class="alias-result" id="aliasResult">
+        <span class="term-comment"># Выбери алиас выше...</span>
+      </div>
+    </div>
+
+    <div class="final-card" style="margin-top:32px">
+      <div class="final-emoji">🚀</div>
+      <h2>Готово!</h2>
+      <p>Теперь ты знаешь, как использовать Git Worktree + Claude Code для параллельной разработки.</p>
+      <div class="checklist">
+        <div class="checklist-item"><span class="check">✓</span> Что такое worktree</div>
+        <div class="checklist-item"><span class="check">✓</span> Команды для создания и удаления</div>
+        <div class="checklist-item"><span class="check">✓</span> Параллельная работа с Claude Code</div>
+        <div class="checklist-item"><span class="check">✓</span> Алиасы для быстрого переключения</div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- BOTTOM NAV -->
+<div class="bottom-nav">
+  <button class="btn btn-prev" id="prevBtn" onclick="goStep(-1)" disabled>← Назад</button>
+  <div class="bottom-hint">стрелки ← → для навигации</div>
+  <button class="btn btn-next" id="nextBtn" onclick="goStep(1)">Далее →</button>
+</div>
+
+<script>
+const TOTAL_STEPS = 6;
+let currentStep = 0;
+
+// --- NAV ---
+function buildNav() {
+  const nav = document.getElementById('navSteps');
+  nav.innerHTML = '';
+  for (let i = 0; i < TOTAL_STEPS; i++) {
+    const s = document.createElement('div');
+    s.className = 'nav-step' + (i === currentStep ? ' active' : '') + (i < currentStep ? ' done' : '');
+    s.onclick = () => { currentStep = i; updateUI(); };
+    nav.appendChild(s);
+  }
+}
+
+function updateUI() {
+  document.querySelectorAll('.step').forEach(s => s.classList.remove('active'));
+  const target = document.querySelector(`.step[data-step="${currentStep}"]`);
+  if (target) target.classList.add('active');
+
+  document.getElementById('navCounter').textContent = `${currentStep + 1} / ${TOTAL_STEPS}`;
+  document.getElementById('progressFill').style.width = `${((currentStep + 1) / TOTAL_STEPS) * 100}%`;
+
+  document.getElementById('prevBtn').disabled = currentStep === 0;
+
+  const nextBtn = document.getElementById('nextBtn');
+  if (currentStep === TOTAL_STEPS - 1) {
+    nextBtn.textContent = '✓ Готово';
+    nextBtn.className = 'btn btn-next finish';
+    nextBtn.disabled = true;
+  } else {
+    nextBtn.textContent = 'Далее →';
+    nextBtn.className = 'btn btn-next';
+    nextBtn.disabled = false;
+  }
+
+  buildNav();
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function goStep(dir) {
+  const next = currentStep + dir;
+  if (next >= 0 && next < TOTAL_STEPS) {
+    currentStep = next;
+    updateUI();
+  }
+}
+
+// Keyboard nav
+document.addEventListener('keydown', e => {
+  if (e.key === 'ArrowRight' || e.key === ' ') { e.preventDefault(); goStep(1); }
+  if (e.key === 'ArrowLeft') { e.preventDefault(); goStep(-1); }
+});
+
+buildNav();
+
+// --- TERMINAL COMMANDS (step 2) ---
+const commands = [
+  {
+    lines: [
+      { type: 'cmd', text: '<span class="term-prompt">~/my-project $</span> <span class="term-cmd">git worktree add ../my-project-auth feature/auth</span>' },
+      { type: 'output', text: '<span class="term-output">Preparing worktree (checking out \'feature/auth\')</span>' },
+      { type: 'output', text: '<span class="term-output">HEAD is now at a3f21c8 initial commit</span>' },
+      { type: 'empty', text: '' },
+    ]
+  },
+  {
+    lines: [
+      { type: 'cmd', text: '<span class="term-prompt">~/my-project $</span> <span class="term-cmd">git worktree list</span>' },
+      { type: 'output', text: '<span class="term-output">/home/user/my-project       a3f21c8 [main]</span>' },
+      { type: 'output', text: '<span class="term-output">/home/user/my-project-auth  a3f21c8 [feature/auth]</span>' },
+      { type: 'empty', text: '' },
+    ]
+  },
+  {
+    lines: [
+      { type: 'cmd', text: '<span class="term-prompt">~/my-project $</span> <span class="term-cmd">git worktree remove ../my-project-auth</span>' },
+      { type: 'output', text: '<span class="term-output">Worktree removed: /home/user/my-project-auth</span>' },
+      { type: 'empty', text: '' },
+    ]
+  }
+];
+
+let cmdIndex = 0;
+
+function runCommand(i) {
+  if (i !== cmdIndex) return;
+  const btn = document.getElementById(`cmdBtn${i}`);
+  btn.disabled = true;
+
+  const terminal = document.getElementById('cmdTerminal');
+  // remove cursor from previous
+  terminal.querySelectorAll('.cursor-blink').forEach(el => el.classList.remove('cursor-blink'));
+
+  const cmd = commands[i];
+  cmd.lines.forEach((line, j) => {
+    setTimeout(() => {
+      const div = document.createElement('div');
+      div.className = 'term-line';
+      div.innerHTML = line.text || '&nbsp;';
+      terminal.appendChild(div);
+      requestAnimationFrame(() => div.classList.add('visible'));
+
+      // Last line of last command
+      if (j === cmd.lines.length - 1) {
+        setTimeout(() => {
+          const prompt = document.createElement('div');
+          prompt.className = 'term-line';
+          prompt.innerHTML = '<span class="term-prompt">~/my-project $</span> <span class="cursor-blink"></span>';
+          terminal.appendChild(prompt);
+          requestAnimationFrame(() => prompt.classList.add('visible'));
+
+          cmdIndex++;
+          if (cmdIndex < commands.length) {
+            document.getElementById(`cmdBtn${cmdIndex}`).disabled = false;
+          }
+        }, 200);
+      }
+    }, j * 350);
+  });
+}
+
+// --- RACE (step 3) ---
+let raceRunning = false;
+
+function startRace() {
+  if (raceRunning) return;
+  raceRunning = true;
+  document.getElementById('raceBtn').disabled = true;
+
+  const seqTasks = document.querySelectorAll('#seqTasks .task-block');
+  const parTasks = document.querySelectorAll('#parTasks .task-block');
+
+  // Reset
+  [...seqTasks, ...parTasks].forEach(t => {
+    t.className = 'task-block';
+    t.querySelector('.task-icon').textContent = '⏳';
+  });
+
+  let seqTime = 0, parTime = 0;
+  const seqEl = document.getElementById('seqTimer');
+  const parEl = document.getElementById('parTimer');
+  seqEl.textContent = '0:00';
+  parEl.textContent = '0:00';
+
+  // Sequential: each task takes ~1.2s
+  const seqSchedule = [0, 1200, 2400, 3600, 4800, 6000]; // start times
+  const seqDurations = [1100, 1100, 1100, 1100, 1100, 1100]; // durations
+
+  seqSchedule.forEach((start, i) => {
+    setTimeout(() => {
+      seqTasks[i].classList.add('show', 'running');
+      seqTasks[i].querySelector('.task-icon').textContent = '⚙️';
+    }, start);
+    setTimeout(() => {
+      seqTasks[i].classList.remove('running');
+      seqTasks[i].classList.add('done');
+      seqTasks[i].querySelector('.task-icon').textContent = '';
+    }, start + seqDurations[i]);
+  });
+
+  // Parallel: first 3 run together, then 3 checks
+  const parSchedule = [0, 0, 0, 1800, 2400, 3000];
+  const parDurations = [1600, 1600, 1600, 500, 500, 500];
+
+  parSchedule.forEach((start, i) => {
+    setTimeout(() => {
+      parTasks[i].classList.add('show', 'running');
+      parTasks[i].querySelector('.task-icon').textContent = '⚙️';
+    }, start);
+    setTimeout(() => {
+      parTasks[i].classList.remove('running');
+      parTasks[i].classList.add('done');
+      parTasks[i].querySelector('.task-icon').textContent = '';
+    }, start + parDurations[i]);
+  });
+
+  // Timers
+  let seqInterval = setInterval(() => {
+    seqTime += 100;
+    const s = Math.floor(seqTime / 1000);
+    const ms = Math.floor((seqTime % 1000) / 10);
+    seqEl.textContent = `${s}:${ms.toString().padStart(2, '0')}`;
+    if (seqTime >= 7100) {
+      clearInterval(seqInterval);
+      seqEl.textContent = '7:10';
+    }
+  }, 100);
+
+  let parDone = false;
+  let parInterval = setInterval(() => {
+    parTime += 100;
+    const s = Math.floor(parTime / 1000);
+    const ms = Math.floor((parTime % 1000) / 10);
+    parEl.textContent = `${s}:${ms.toString().padStart(2, '0')}`;
+    if (parTime >= 3500) {
+      clearInterval(parInterval);
+      parEl.textContent = '3:50';
+      parDone = true;
+    }
+  }, 100);
+
+  // Show all tasks
+  setTimeout(() => {
+    [...seqTasks, ...parTasks].forEach(t => t.classList.add('show'));
+  }, 50);
+
+  setTimeout(() => {
+    raceRunning = false;
+    document.getElementById('raceBtn').disabled = false;
+    document.getElementById('raceBtn').innerHTML = '<span class="icon">↻</span> Запустить заново';
+  }, 7500);
+}
+
+// --- QUIZ (step 4) ---
+function answer(el, correct, quizId) {
+  const options = el.parentElement.querySelectorAll('.quiz-option');
+  options.forEach(o => {
+    o.classList.add('disabled');
+    if (o === el) {
+      o.classList.add(correct ? 'correct' : 'wrong');
+    }
+  });
+
+  // Show correct if wrong
+  if (!correct) {
+    options.forEach(o => {
+      if (o.onclick && o.onclick.toString().includes('true')) {
+        // find the correct one
+      }
+    });
+    // Just highlight correct by checking all
+    document.getElementById(`${quizId}-fail`).classList.add('show');
+    // Find and highlight correct
+    options.forEach((o, i) => {
+      // Check each option's handler — simpler to just mark B as correct for quiz1, C for quiz2
+    });
+  } else {
+    document.getElementById(`${quizId}-ok`).classList.add('show');
+  }
+}
+
+// Patch: mark correct answers visually
+document.querySelectorAll('.quiz-option').forEach(opt => {
+  const origOnclick = opt.getAttribute('onclick');
+  if (origOnclick && origOnclick.includes('true')) {
+    opt.dataset.correct = '1';
+  }
+});
+
+// Override answer to also highlight correct
+const _answer = answer;
+window.answer = function(el, correct, quizId) {
+  const options = el.parentElement.querySelectorAll('.quiz-option');
+  options.forEach(o => o.classList.add('disabled'));
+
+  if (correct) {
+    el.classList.add('correct');
+    document.getElementById(`${quizId}-ok`).classList.add('show');
+  } else {
+    el.classList.add('wrong');
+    document.getElementById(`${quizId}-fail`).classList.add('show');
+    options.forEach(o => {
+      if (o.dataset.correct === '1') o.classList.add('correct');
+    });
+  }
+};
+
+// --- ALIAS (step 5) ---
+const aliasData = [
+  {
+    key: 'za',
+    color: 'var(--accent)',
+    lines: [
+      '<span class="term-comment"># alias za="cd ~/projects/my-project && claude"</span>',
+      '<span class="term-prompt">~ $</span> <span class="term-cmd">za</span>',
+      '<span class="term-output">→ cd ~/projects/my-project</span>',
+      '<span class="term-output">→ claude</span>',
+      '',
+      '<span style="color:var(--accent)">╭─ Claude Code ─────────────────────╮</span>',
+      '<span style="color:var(--accent)">│</span> <span class="term-output">Контекст: my-project (main)</span>        <span style="color:var(--accent)">│</span>',
+      '<span style="color:var(--accent)">╰───────────────────────────────────╯</span>',
+    ]
+  },
+  {
+    key: 'zb',
+    color: 'var(--accent2)',
+    lines: [
+      '<span class="term-comment"># alias zb="cd ~/projects/my-project-auth && claude"</span>',
+      '<span class="term-prompt">~ $</span> <span class="term-cmd">zb</span>',
+      '<span class="term-output">→ cd ~/projects/my-project-auth</span>',
+      '<span class="term-output">→ claude</span>',
+      '',
+      '<span style="color:var(--accent2)">╭─ Claude Code ─────────────────────╮</span>',
+      '<span style="color:var(--accent2)">│</span> <span class="term-output">Контекст: my-project-auth (feature/auth)</span> <span style="color:var(--accent2)">│</span>',
+      '<span style="color:var(--accent2)">╰───────────────────────────────────╯</span>',
+    ]
+  },
+  {
+    key: 'zc',
+    color: 'var(--accent3)',
+    lines: [
+      '<span class="term-comment"># alias zc="cd ~/projects/my-project-fix && claude"</span>',
+      '<span class="term-prompt">~ $</span> <span class="term-cmd">zc</span>',
+      '<span class="term-output">→ cd ~/projects/my-project-fix</span>',
+      '<span class="term-output">→ claude</span>',
+      '',
+      '<span style="color:var(--accent3)">╭─ Claude Code ─────────────────────╮</span>',
+      '<span style="color:var(--accent3)">│</span> <span class="term-output">Контекст: my-project-fix (fix/login-bug)</span> <span style="color:var(--accent3)">│</span>',
+      '<span style="color:var(--accent3)">╰───────────────────────────────────╯</span>',
+    ]
+  }
+];
+
+function pressAlias(i) {
+  const btns = document.querySelectorAll('.alias-key-btn');
+  btns.forEach(b => b.classList.remove('pressed'));
+  btns[i].classList.add('pressed');
+
+  const result = document.getElementById('aliasResult');
+  const data = aliasData[i];
+
+  result.innerHTML = '';
+  data.lines.forEach((line, j) => {
+    setTimeout(() => {
+      const div = document.createElement('div');
+      div.style.opacity = '0';
+      div.style.transform = 'translateY(4px)';
+      div.style.transition = 'all 0.25s ease';
+      div.innerHTML = line || '&nbsp;';
+      result.appendChild(div);
+      requestAnimationFrame(() => {
+        div.style.opacity = '1';
+        div.style.transform = 'translateY(0)';
+      });
+    }, j * 120);
+  });
+
+  setTimeout(() => btns[i].classList.remove('pressed'), 300);
+}
+</script>
+
+</body>
+</html>
