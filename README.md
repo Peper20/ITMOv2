@@ -68,7 +68,7 @@
 | Мультипромптинг | Acceptance Criteria в Gherkin |
 | Критика через роль | Улучшенный test plan |
 
-**Практика:** [Practice 02 - Professional Prompting](practices/practice_02/)
+**Практика:** [Practice 02 - Professional Prompting](practices/02/)
 
 **[Запись лекции и практики №2](https://avito.ktalk.ru/recordings/dn7CJ8krVJVrslSwSGa9)**
 
@@ -88,7 +88,7 @@
 | Управление контекстом (@file, @folder) | FastAPI сервис с CRUD операциями |
 | Цикл: Контекст → Задача → Ревью → Уточнение | In-memory database |
 
-**Практика:** [Practice 03 - Coding Agents Management](practices/practice_03/)
+**Практика:** [Practice 03 - Coding Agents Management](practices/03/)
 
 **[Запись лекции №3](https://avito.ktalk.ru/recordings/Z6FHS0jXz4lzRfE7JjfK)**
 
@@ -106,7 +106,7 @@
 | От статических Rules к динамическому MCP | Проектный протокол (MCP) и правила работы с контекстом |
 | AI-аудит и рефакторинг по правилам | Упорядочивание структуры, обновление интерфейсов, устранение расхождений |
 
-**Практика:** [Practice 04 - External API Integration](practices/practice_04/)
+**Практика:** [Practice 04 - External API Integration](practices/04/)
 
 **[Запись лекции и практики №4](https://avito.ktalk.ru/recordings/Ss7dINd8aDWTuRQ8ffwG)**
 
@@ -127,7 +127,7 @@
 | Рефакторинг без регрессий | Улучшаем структуру (в т.ч. под Library-First/CLI) |
 | Новые режимы работы (планирование/имплементация/и т.п.) | Упорядочиваем процесс «контекст → задача → ревью → уточнение» |
 
-**Практика:** Practice 05 - Spec-driven Development & Refactoring (в разработке)
+**Практика:** [Practice 05 - Spec-driven Development & Refactoring](practices/05/)
 
 **[Запись лекции №5](https://drive.google.com/file/d/1iNmkk6nApr6gAZJIspQo7QB5AZubF4Sy/view?usp=sharing)**
 
@@ -147,7 +147,8 @@
 | Публикация ревью в GitHub | Комментарий/Review с actionable items |
 | Проверка ассистента на новой фиче | Делаем ещё одно изменение и валидируем workflow |
 
-**Практика:** Practice 06 - AI Code Review Assistant (в разработке)
+**Практика:** [Practice 06 - AI Code Review Assistant](practices/06/)
+
 
 **[Запись лекции и практики №6](https://avito.ktalk.ru/recordings/NBftmN0fnCNK0h1ECQKG)**
 
