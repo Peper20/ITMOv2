@@ -52,7 +52,7 @@
 | Декомпозиция задач | Бэклог, DoR/DoD |
 | LLM для планирования | Архитектурная схема (PlantUML) |
 
-**Практика:** [Practice 01 - AI Planning Tools](practices/practice_01/)
+**Практика:** [Practice 01 - AI Planning Tools](practices/01/)
 
 **[Запись лекции и практики №1](https://avito.ktalk.ru/recordings/XeUXELkm3rBcgxf4xIHX)**
 
