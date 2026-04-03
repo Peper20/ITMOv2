@@ -149,6 +149,8 @@
 
 **Практика:** Practice 06 - AI Code Review Assistant (в разработке)
 
+**[Запись лекции и практики №6](https://avito.ktalk.ru/recordings/NBftmN0fnCNK0h1ECQKG)**
+
 ---
 
 ### Неделя 9: Приёмка лабораторных работ
