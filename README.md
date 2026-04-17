@@ -169,7 +169,9 @@
 | Дописываем тесты под найденные кейсы | Стабильный набор unit-тестов |
 | Добиваемся ~90% покрытия unit-тестами | Осознанное покрытие ключевой логики |
 
-**Практика:** Practice 07 - AI-powered Testing (в разработке)
+**Практика:** [Practice 07 - AI-powered Testing](practices/07/)
+
+**[Запись лекции и практики №7](https://avito.ktalk.ru/recordings/yG47BPAVvsFBlS4kz1EU)**
 
 ---
 
