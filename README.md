@@ -187,7 +187,10 @@
 | Новые требования → новый цикл | Переход от поддержки к планированию следующей итерации |
 | Бизнес-метрики для аргументации пользы | Показатели, объясняющие эффект автоматизаций |
 
-**Практика:** Practice 08 - Support Automation & Triage (в разработке)
+**Практика:** [Practice 08 - Support Automation & Triage](practices/08/)
+
+**[Запись лекции и практики №8](https://avito.ktalk.ru/recordings/klcpZtPSfBgnoiPZVFQb)**
+
 
 ---
 
