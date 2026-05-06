@@ -1651,37 +1651,53 @@ Types: bug | task |
     <h2 class="reveal">Домашнее задание</h2>
     <div class="sep reveal"></div>
 
-    <div class="two-col reveal" style="margin-top: 14px; align-items: start;">
+    <div class="three-col reveal" style="margin-top: 14px; align-items: stretch;">
 
-        <!-- Основное задание -->
+        <!-- Часть 1 -->
+        <div class="card" style="border-left: 3px solid var(--teal);">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+                <span class="badge teal">Часть 1 · 4 балла</span>
+                <span class="badge" style="background:var(--surface-2);color:var(--text-dim);">WF1</span>
+            </div>
+            <h3>Базовый Workflow 1</h3>
+            <div class="timeline" style="margin-top: 12px;">
+                <div class="timeline-item done">Webhook на <code>issue opened</code></div>
+                <div class="timeline-item done">AI-классификатор: bug / task / feature</div>
+                <div class="timeline-item done">Switch → лейбл для каждого типа</div>
+                <div class="timeline-item done">Ветка <code>unknown</code>: лейбл <code>needs-triage</code> без комментария</div>
+                <div class="timeline-item current">Sub-workflow для классификатора</div>
+            </div>
+        </div>
+
+        <!-- Часть 2 -->
         <div class="card" style="border-left: 3px solid var(--orange);">
-            <div style="display:flex;justify-content:space-between;margin-bottom:12px;">
-                <span class="badge orange">Основное</span>
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+                <span class="badge orange">Часть 2 · 4 балла</span>
                 <span class="badge" style="background:var(--surface-2);color:var(--text-dim);">cron пн 9:00</span>
             </div>
             <h3>Еженедельная статистика → Gmail</h3>
-            <div class="timeline" style="margin-top: 14px;">
+            <div class="timeline" style="margin-top: 12px;">
                 <div class="timeline-item done">Cron-триггер: <code>0 9 * * MON</code></div>
-                <div class="timeline-item done">4 GitHub API запроса: Issues открытые/закрытые + PR + коммиты за неделю</div>
-                <div class="timeline-item done">Code node: группировка по типу лейбла и по автору коммита</div>
-                <div class="timeline-item current">Gmail node → HTML-письмо руководителю с таблицей</div>
-            </div>
-            <div class="callout" style="margin-top: 14px;">
-                <strong>Новые механики:</strong> Cron-триггер · агрегация в Code node · Gmail node — всё это первый раз в курсе
+                <div class="timeline-item done">4 GitHub API запроса за неделю</div>
+                <div class="timeline-item done">Code node: группировка по типу и автору</div>
+                <div class="timeline-item current">Gmail node → HTML-письмо с таблицей</div>
             </div>
         </div>
 
         <!-- Звёздочка -->
         <div class="card" style="border-top: 3px solid var(--yellow); background: var(--yellow-bg);">
-            <div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;">
-                <span style="font-size:22px;line-height:1;">★</span>
-                <h3 style="margin:0;">Задание со звёздочкой</h3>
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+                <div style="display:flex;align-items:center;gap:7px;">
+                    <span style="font-size:18px;line-height:1;">★</span>
+                    <span class="badge" style="background:var(--yellow);color:#1a1a1a;">Звёздочка · 3 балла</span>
+                </div>
             </div>
-            <div class="timeline" style="margin-top: 4px;">
-                <div class="timeline-item done">Сохранять статистику каждой недели в data table</div>
-                <div class="timeline-item done">При следующем запуске — достать прошлую неделю, вычислить Δ по каждому показателю</div>
-                <div class="timeline-item done">Basic LLM Chain: передаём diff как контекст, просим написать аннотацию — что выросло, что упало, на что обратить внимание</div>
-                <div class="timeline-item current">Добавить аннотацию в письмо отдельным блоком <em>«AI-комментарий недели»</em></div>
+            <h3>Diff недели + AI-аннотация</h3>
+            <div class="timeline" style="margin-top: 12px;">
+                <div class="timeline-item done">Сохранять статистику в Data Table</div>
+                <div class="timeline-item done">Вычислять Δ к прошлой неделе</div>
+                <div class="timeline-item done">Basic LLM Chain генерирует аннотацию изменений</div>
+                <div class="timeline-item current">Блок «AI-комментарий недели» в письме</div>
             </div>
         </div>
 
