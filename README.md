@@ -203,5 +203,3 @@ ITMO/
 ├── AGENTS.md                  # Договорённости с AI-агентами по проекту
 └── venv/                       # Виртуальное окружение
 ```
-омощью AI | [смотреть запись](https://avito.ktalk.ru/recordings/yG47BPAVvsFBlS4kz1EU) |
-| Лекция + практика №8 — автоматизация поддержки | [смотреть запись](https://avito.ktalk.ru/recordings/klcpZtPSfBgnoiPZVFQb) |
