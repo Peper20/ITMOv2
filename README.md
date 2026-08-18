@@ -203,20 +203,5 @@ ITMO/
 ├── AGENTS.md                  # Договорённости с AI-агентами по проекту
 └── venv/                       # Виртуальное окружение
 ```
-
-## 📼 Приложение: записи демо-версии курса
-
-Курс менялся с прошлого потока (демо на 20 человек). Темы и порядок практик в записях могут отличаться от актуальной программы выше, но материал по большинству тем всё ещё полезен.
-
-| Тема (по демо-версии) | Запись |
-|---|---|
-| Лекция + практика №1 — планирование, EJM | [смотреть запись](https://avito.ktalk.ru/recordings/XeUXELkm3rBcgxf4xIHX) |
-| Лекция + практика №2 — промпт-инжиниринг (R.C.T.F.) | [смотреть запись](https://avito.ktalk.ru/recordings/dn7CJ8krVJVrslSwSGa9) |
-| Лекция №3 — кодинг-агенты | [смотреть запись](https://avito.ktalk.ru/recordings/Z6FHS0jXz4lzRfE7JjfK) |
-| Практика №3 — кодинг-агенты (FastAPI) | [смотреть запись](https://avito.ktalk.ru/recordings/W7T7VNY4dslElLqz4Mmr) |
-| Лекция + практика №4 — MCP и внешний API | [смотреть запись](https://avito.ktalk.ru/recordings/Ss7dINd8aDWTuRQ8ffwG) |
-| Лекция №5 — Spec-driven разработка | [смотреть запись](https://drive.google.com/file/d/1iNmkk6nApr6gAZJIspQo7QB5AZubF4Sy/view) |
-| Практика №5 — Spec-driven + рефакторинг | [смотреть запись](https://avito.ktalk.ru/recordings/8ohvVxzSo97FqfwyOfkX) |
-| Лекция + практика №6 — ассистент код-ревью | [смотреть запись](https://avito.ktalk.ru/recordings/NBftmN0fnCNK0h1ECQKG) |
-| Лекция + практика №7 — тесты с помощью AI | [смотреть запись](https://avito.ktalk.ru/recordings/yG47BPAVvsFBlS4kz1EU) |
+омощью AI | [смотреть запись](https://avito.ktalk.ru/recordings/yG47BPAVvsFBlS4kz1EU) |
 | Лекция + практика №8 — автоматизация поддержки | [смотреть запись](https://avito.ktalk.ru/recordings/klcpZtPSfBgnoiPZVFQb) |
