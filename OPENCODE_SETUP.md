@@ -47,18 +47,48 @@ Windows: используйте WSL, затем выполните команд�
 opencode --version
 ```
 
-## 2. Подключение OpenRouter
+## 2. Подключение VseLLM
 
-1. Возьмите выданный преподавателем учебный OpenRouter API key. Не пересылайте его другим студентам и не публикуйте.
-2. В терминале запустите:
+1. Получите у преподавателя учебный VseLLM API key. Не пересылайте его другим студентам и не публикуйте.
+2. Создайте локальный конфиг OpenCode `opencode.json` в корне репозитория. Не добавляйте этот файл в commit, если в нём указан ключ напрямую. Рекомендуемый вариант — передать ключ через переменную окружения:
+
+   ```json
+   {
+     "$schema": "https://opencode.ai/config.json",
+     "provider": {
+       "vsellm": {
+         "npm": "@ai-sdk/openai-compatible",
+         "name": "VseLLM",
+         "options": {
+            "baseURL": "https://api.vsellm.ru/v1",
+            "apiKey": "{env:VSELLM_API_KEY}"
+         },
+         "models": {
+           "openai/gpt-5": {
+             "name": "openai/gpt-5"
+           },
+           "anthropic/claude-sonnet-4": {
+             "name": "anthropic/claude-sonnet-4"
+           }
+         }
+       }
+     }
+   }
+   ```
+
+3. В текущем терминале задайте ключ:
+
+   ```bash
+   export VSELLM_API_KEY='ваш-ключ-vsellm'
+   ```
+
+   Запустите OpenCode:
 
    ```bash
    opencode
    ```
 
-3. В интерфейсе OpenCode выполните `/connect`.
-4. Выберите `OpenRouter` и вставьте API key.
-5. Выполните `/models` и выберите модель, указанную преподавателем.
+4. Если OpenCode предложит подключить провайдера через `/connect`, выберите `VseLLM` и вставьте API key. Затем выполните `/models` и выберите модель, указанную преподавателем.
 
 Проверка сохранённого провайдера:
 
@@ -66,7 +96,7 @@ opencode --version
 opencode auth list
 ```
 
-OpenCode хранит credential вне репозитория, в пользовательском файле `~/.local/share/opencode/auth.json`. Не копируйте этот файл и не добавляйте API key в `.env`, Markdown, скриншоты, commit или PR.
+OpenCode хранит credential вне репозитория, в пользовательском файле `~/.local/share/opencode/auth.json`. Не копируйте этот файл и не добавляйте API key в `.env`, Markdown, скриншоты, commit или PR. Добавьте локальный `opencode.json` в `.git/info/exclude`.
 
 ## 3. Быстрая проверка
 
@@ -74,7 +104,7 @@ OpenCode хранит credential вне репозитория, в пользо�
 opencode run "Ответь одним словом: READY"
 ```
 
-Если модель не выбрана, вернитесь в TUI, выполните `/models` и выберите доступную модель OpenRouter.
+Если модель не выбрана, вернитесь в TUI, выполните `/models` и выберите доступную модель VseLLM.
 
 ## 4. Запуск для Практики 1
 
@@ -100,7 +130,7 @@ opencode run \
 ## 5. Если что-то не работает
 
 - `opencode: command not found` — перезапустите терминал и повторите `opencode --version`;
-- провайдер не виден — повторите `/connect`, затем проверьте `opencode auth list`;
+- провайдер не виден — проверьте `opencode.json`, переменную `VSELLM_API_KEY`, затем повторите `/connect`;
 - модель недоступна — откройте `/models` и выберите доступную преподавателю и группе;
 - OpenCode просит разрешение на запись или shell — отклоните: в Практике 1 эти действия не нужны;
-- токен случайно попал в файл или PR — немедленно удалите его из публикации и отзовите ключ в OpenRouter.
+- токен случайно попал в файл или PR — немедленно удалите его из публикации и отзовите ключ в VseLLM.
