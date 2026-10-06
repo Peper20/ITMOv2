@@ -1,20 +1,23 @@
 {
   "$schema": "https://opencode.ai/config.json",
-  "model": "ollama/itmo-agent",
-  "small_model": "ollama/itmo-agent",
+  "model": "llamacpp/qwen3.6-35b",
+  "small_model": "llamacpp/qwen3.6-35b",
   "provider": {
-    "ollama": {
+    "llamacpp": {
       "npm": "@ai-sdk/openai-compatible",
-      "name": "Ollama local",
+      "name": "llama.cpp local",
       "options": {
-        "baseURL": "http://localhost:11434/v1"
+        "baseURL": "http://127.0.0.1:9931/v1",
+        "apiKey": "{file:~/.config/llama/api-key}"
       },
       "models": {
-        "itmo-agent": {
-          "name": "ITMO local 64k",
+        "qwen3.6-35b": {
+          "name": "Qwen3.6 35B-A3B IQ4_XS local",
+          "tool_call": true,
+          "reasoning": true,
           "limit": {
-            "context": 65536,
-            "output": 4096
+            "context": 131072,
+            "output": 16384
           }
         }
       }
@@ -32,7 +35,12 @@
         "glob": "allow",
         "grep": "allow"
       }
+    },
+    "title": {
+      "disable": true
     }
-  }
+  },
+  "enabled_providers": [
+    "llamacpp"
+  ]
 }
-
