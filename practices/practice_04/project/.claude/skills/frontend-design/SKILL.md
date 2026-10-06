@@ -1,6 +1,6 @@
 ---
 name: frontend-design
-description: Use when building new UI or reshaping an existing one in frontend/ (index.html, style.css) — aesthetic direction, typography, layout and copy that don't read as templated defaults, within this project's no-CDN, no-framework constraints.
+description: Use when building new UI or reshaping an existing one in frontend/ (Svelte components, app.css) — aesthetic direction, typography, layout and copy that don't read as templated defaults, within this project's Svelte + Vite, no-CDN constraints.
 ---
 
 # Frontend Design
@@ -9,11 +9,11 @@ Adapted from the `frontend-design` plugin (claude-code-plugins). Project-wide fr
 
 ## Project constraints (these win over any advice below)
 
-- Plain HTML/CSS/JS only: `frontend/index.html`, `frontend/style.css`, `frontend/app.js`. No frameworks, build steps, CDNs or external requests of any kind.
-- Typography: no Google Fonts or other hosted fonts. Use a deliberate system font stack (e.g. `ui-serif`, `ui-rounded`, `ui-monospace`, `system-ui` with named fallbacks), or a local `.woff2` in `frontend/fonts/` loaded via `@font-face` — only if the licence allows redistribution, and say which font and licence you chose.
-- Images and icons: inline SVG or local files in `frontend/`; no icon fonts from a CDN.
-- Design tokens (palette, type scale, spacing) as CSS custom properties on `:root` in `style.css`; support `prefers-color-scheme: dark` and `prefers-reduced-motion`.
-- Semantic markup (`header`, `main`, `form`, `label`), mobile-first layout, user input rendered via `textContent`.
+- Svelte 5 + Vite (see `.claude/rules/frontend.md`). No UI kits or CSS frameworks; styles are hand-written (global tokens in `src/app.css`, component styles scoped in `.svelte`). No CDNs or external requests of any kind at runtime.
+- Typography: no Google Fonts or other hosted fonts. Use a deliberate system font stack (e.g. `ui-serif`, `ui-rounded`, `ui-monospace`, `system-ui` with named fallbacks), or a local `.woff2` in `frontend/src/assets/fonts/` loaded via `@font-face` — only if the licence allows redistribution, and say which font and licence you chose.
+- Images and icons: inline SVG or local files in `frontend/src/assets/`; no icon fonts from a CDN.
+- Design tokens (palette, type scale, spacing) as CSS custom properties on `:root` in `src/app.css`; support `prefers-color-scheme: dark` and `prefers-reduced-motion`.
+- Semantic markup (`header`, `main`, `form`, `label`), mobile-first layout, user input rendered via plain `{...}` interpolation, never `{@html}`.
 - Interface copy is in Russian unless the brief says otherwise; the writing advice below applies to it as well.
 
 Approach this as the design lead at a design studio known for giving every client a distinct visual identity that is not mistaken for anyone else's. This client has already rejected proposals that felt cliché or templated, and is paying for a distinctive point of view: make deliberate, opinionated choices about palette, typography, and layout that are specific to this brief, and take aesthetic risk if justified.

@@ -60,6 +60,7 @@ def get_diagnostics(file_path: Path, root: Path) -> list[dict[str, Any]]:
     try:
         send(proc, {"jsonrpc": "2.0", "id": 1, "method": "initialize", "params": {
             "processId": os.getpid(), "rootUri": root.as_uri(),
+            "workspaceFolders": [{"uri": root.as_uri(), "name": root.name}],
             "capabilities": {"textDocument": {"publishDiagnostics": {}}},
         }})
         opened = False
