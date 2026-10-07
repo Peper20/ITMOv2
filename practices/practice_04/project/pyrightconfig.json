@@ -1,0 +1,5 @@
+{
+  "include": ["backend", "tests"],
+  "pythonVersion": "3.12",
+  "typeCheckingMode": "standard"
+}
