@@ -13,7 +13,7 @@
 
 ## Requirement Completeness
 
-- [ ] No [NEEDS CLARIFICATION] markers remain
+- [x] No [NEEDS CLARIFICATION] markers remain
 - [x] Requirements are testable and unambiguous
 - [x] Success criteria are measurable
 - [x] Success criteria are technology-agnostic (no implementation details)
@@ -31,12 +31,9 @@
 
 ## Notes
 
-- Осталось 3 маркера [NEEDS CLARIFICATION] (по условию задачи вопросы пользователю не задаются):
-  1. US4 / FR-013 — что происходит со следующим экземпляром при снятии отметки «выполнено».
-  2. FR-001 — достаточный набор вариантов повтора.
-  3. FR-016 — нужно ли окончание серии в первой версии.
-  Решаются в `/speckit-clarify` или при согласовании общего контракта с командой логики.
-- Детали API (поля, коды, вызовы) вынесены из spec.md в `contracts/ui-needs.md`. В spec.md
-  остались упоминания существующих элементов UI (окно дедлайна, полоса ошибки, быстрое
-  добавление) — это пользовательские экраны, а не реализация.
-- Проверка пройдена с первой итерации, кроме пункта о маркерах.
+- 2026-10-29: все 3 маркера [NEEDS CLARIFICATION] закрыты решениями общего контракта
+  `specs/contracts/recurring.md` (раздел Clarifications в spec.md): набор повторов — R1 (+ «Каждый год»),
+  снятие отметки — R4 (следующий остаётся), окончание серии — вне объёма.
+- Детали API (поля, коды) — в общем контракте; черновик `contracts/ui-needs.md` помечен как заменённый.
+  В spec.md коды значений упомянуты только в Clarifications как ссылка на решения R1–R6.
+- Все пункты пройдены; спецификация готова к `/speckit-plan`.
