@@ -33,8 +33,23 @@ class DbTestCase(unittest.TestCase):
 
 class MigrationTests(DbTestCase):
     def test_sets_user_version_and_is_idempotent(self) -> None:
-        self.assertEqual(self.conn.execute("PRAGMA user_version").fetchone()[0], 1)
-        self.assertEqual(db.migrate(self.conn), 1)
+        self.assertEqual(self.conn.execute("PRAGMA user_version").fetchone()[0], 2)
+        self.assertEqual(db.migrate(self.conn), 2)
+
+    def test_v1_to_v2_keeps_rows_without_recurrence(self) -> None:
+        conn = db.connect(":memory:")
+        db.MIGRATIONS[0](conn)
+        conn.execute(
+            "INSERT INTO deadlines (title, due_at, created_at, updated_at)"
+            " VALUES ('старый', '2099-01-01T10:00', 'a', 'a')"
+        )
+        conn.commit()
+        self.assertEqual(db.migrate(conn), 2)
+        (old,) = db.list_deadlines(conn)
+        self.assertEqual(old["title"], "старый")
+        self.assertIsNone(old["recurrence"])
+        self.assertIsNone(old["next_id"])
+        conn.close()
 
     def test_keeps_foreign_tables(self) -> None:
         conn = db.connect(":memory:")
@@ -211,6 +226,136 @@ class DeadlineTests(DbTestCase):
                 " VALUES ('x', '2099-01-01T00:00', 9, 'a', 'a')"
             )
 
+
+
+class NextDueTests(unittest.TestCase):
+    """Таблица Edge Cases из specs/001-recurring-logic/spec.md."""
+
+    def test_table(self) -> None:
+        cases = [
+            ("daily", "2026-12-31T08:00", 31, "2027-01-01T08:00"),
+            ("daily", "2028-02-28T08:00", 28, "2028-02-29T08:00"),
+            ("weekly", "2026-12-28T18:00", 28, "2027-01-04T18:00"),
+            ("monthly", "2026-01-31T10:00", 31, "2026-02-28T10:00"),
+            ("monthly", "2028-01-31T10:00", 31, "2028-02-29T10:00"),
+            ("monthly", "2026-02-28T10:00", 31, "2026-03-31T10:00"),
+            ("monthly", "2026-04-30T10:00", 31, "2026-05-31T10:00"),
+            ("monthly", "2026-12-15T10:00", 15, "2027-01-15T10:00"),
+            ("yearly", "2028-02-29T10:00", 29, "2029-02-28T10:00"),
+            ("yearly", "2031-02-28T10:00", 29, "2032-02-29T10:00"),
+        ]
+        for recurrence, due, anchor, expected in cases:
+            with self.subTest(recurrence=recurrence, due=due):
+                self.assertEqual(db.next_due(due, recurrence, anchor), expected)
+
+    def test_out_of_range(self) -> None:
+        with self.assertRaises(db.ValidationError) as ctx:
+            db.next_due("9999-12-31T10:00", "daily", 31)
+        self.assertEqual(ctx.exception.field, "status")
+
+
+class RecurrenceTests(DbTestCase):
+    def done(self, deadline_id: int) -> tuple[db.Deadline, db.Deadline | None]:
+        return db.update_deadline_with_next(self.conn, deadline_id, {"status": "done"})
+
+    def test_done_creates_exactly_one_next_with_copied_fields(self) -> None:
+        cat = self.make_category()
+        dl = self.make_deadline(
+            title="Отчёт", description="d", category_id=cat["id"], priority=3,
+            due_at="2026-11-06T18:00", recurrence="weekly",
+        )
+        done, nxt = self.done(dl["id"])
+        assert nxt is not None
+        self.assertEqual(done["status"], "done")
+        self.assertEqual(done["next_id"], nxt["id"])
+        self.assertEqual(nxt["due_at"], "2026-11-13T18:00")
+        for key in ("title", "description", "category_id", "priority", "recurrence"):
+            self.assertEqual(nxt[key], dl[key], key)
+        self.assertEqual((nxt["status"], nxt["completed_at"], nxt["next_id"]), ("todo", None, None))
+        self.assertEqual(len(db.list_deadlines(self.conn)), 2)
+
+    def test_late_completion_is_one_step(self) -> None:
+        dl = self.make_deadline(due_at="2026-10-01T10:00", recurrence="weekly")
+        _, nxt = self.done(dl["id"])
+        assert nxt is not None
+        self.assertEqual(nxt["due_at"], "2026-10-08T10:00")
+
+    def test_anchor_day_is_inherited(self) -> None:
+        dl = self.make_deadline(due_at="2026-01-31T10:00", recurrence="monthly")
+        _, feb = self.done(dl["id"])
+        assert feb is not None
+        _, mar = self.done(feb["id"])
+        assert mar is not None
+        self.assertEqual((feb["due_at"], mar["due_at"]), ("2026-02-28T10:00", "2026-03-31T10:00"))
+
+    def test_undo_and_redo_do_not_duplicate(self) -> None:
+        dl = self.make_deadline(recurrence="daily")
+        _, nxt = self.done(dl["id"])
+        assert nxt is not None
+        for _ in range(10):
+            reopened, none1 = db.update_deadline_with_next(self.conn, dl["id"], {"status": "todo"})
+            again, none2 = self.done(dl["id"])
+            self.assertEqual((none1, none2), (None, None))
+            self.assertEqual((reopened["next_id"], again["next_id"]), (nxt["id"], nxt["id"]))
+        self.assertEqual(len(db.list_deadlines(self.conn)), 2)
+
+    def test_deleted_next_is_recreated(self) -> None:
+        dl = self.make_deadline(recurrence="daily")
+        _, nxt = self.done(dl["id"])
+        assert nxt is not None
+        db.delete_deadline(self.conn, nxt["id"])
+        self.assertIsNone(db.get_deadline(self.conn, dl["id"])["next_id"])
+        db.update_deadline(self.conn, dl["id"], {"status": "todo"})
+        _, again = self.done(dl["id"])
+        self.assertIsNotNone(again)
+
+    def test_no_next_without_transition_or_recurrence(self) -> None:
+        plain = self.make_deadline()
+        self.assertIsNone(self.done(plain["id"])[1])
+        created_done = self.make_deadline(recurrence="weekly", status="done")
+        self.assertIsNone(created_done["next_id"])
+        _, nxt = db.update_deadline_with_next(self.conn, created_done["id"], {"recurrence": "daily"})
+        self.assertIsNone(nxt)
+        self.assertEqual(len(db.list_deadlines(self.conn)), 2)
+
+    def test_recurrence_set_in_same_request_as_done(self) -> None:
+        dl = self.make_deadline(due_at="2026-11-06T18:00")
+        _, nxt = db.update_deadline_with_next(self.conn, dl["id"], {"status": "done", "recurrence": "monthly"})
+        assert nxt is not None
+        self.assertEqual(nxt["due_at"], "2026-12-06T18:00")
+
+    def test_turning_off_keeps_existing_next(self) -> None:
+        dl = self.make_deadline(recurrence="daily")
+        _, nxt = self.done(dl["id"])
+        assert nxt is not None
+        off = db.update_deadline(self.conn, dl["id"], {"recurrence": None})
+        self.assertIsNone(off["recurrence"])
+        self.assertEqual(off["next_id"], nxt["id"])
+        db.get_deadline(self.conn, nxt["id"])
+
+    def test_due_change_resets_anchor(self) -> None:
+        dl = self.make_deadline(due_at="2026-01-31T10:00", recurrence="monthly")
+        db.update_deadline(self.conn, dl["id"], {"due_at": "2026-01-15T10:00"})
+        _, nxt = self.done(dl["id"])
+        assert nxt is not None
+        self.assertEqual(nxt["due_at"], "2026-02-15T10:00")
+
+    def test_out_of_range_is_atomic(self) -> None:
+        dl = self.make_deadline(due_at="9999-12-31T10:00", recurrence="daily")
+        self.assert_invalid("status", self.done, dl["id"])
+        self.assertEqual(db.get_deadline(self.conn, dl["id"])["status"], "todo")
+        self.assertEqual(len(db.list_deadlines(self.conn)), 1)
+
+    def test_validation(self) -> None:
+        base: dict[str, object] = {"title": "x", "due_at": "2099-01-01T10:00"}
+        for value in ("hourly", "", 1, True, "WEEKLY"):
+            with self.subTest(value=value):
+                with self.assertRaises(db.ValidationError) as ctx:
+                    db.create_deadline(self.conn, {**base, "recurrence": value})
+                self.assertEqual(ctx.exception.field, "recurrence")
+                self.assertEqual(ctx.exception.message, "Повтор: выберите один из вариантов")
+        for field in ("next_id", "recurrence_day"):
+            self.assert_invalid(field, db.create_deadline, self.conn, {**base, field: 1})
 
 NOW = datetime(2026, 10, 6, 12, 0)
 

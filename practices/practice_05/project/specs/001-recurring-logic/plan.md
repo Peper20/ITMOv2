@@ -42,9 +42,10 @@ tests/test_server.py — POST/PATCH c recurrence, ошибки, next в отве
 - `next_due(due_at, recurrence, anchor_day)` — чистая функция; `monthly`/`yearly` через
   `calendar.monthrange`, день = `min(anchor_day, дней в месяце)`. Выход за 9999 год →
   `ValidationError("status", ...)`.
-- `update_deadline` возвращает пару `(deadline, next | None)`, сервер собирает
-  `{**deadline, "next": next}`. Альтернатива — флаг в `Deadline` — смешала бы постоянное поле с
-  разовым.
+- `update_deadline_with_next` возвращает пару `(deadline, next | None)`, сервер собирает
+  `{**deadline, "next": next}`; `update_deadline` сохраняет прежнюю сигнатуру и возвращает только
+  дедлайн (существующие тесты не меняются). Альтернатива — флаг в `Deadline` — смешала бы
+  постоянное поле с разовым.
 - Отметка и вставка следующего — один `with conn:`; `next_id` ставится тем же UPDATE.
 
 ## Complexity Tracking

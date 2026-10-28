@@ -6,6 +6,7 @@
 
 from __future__ import annotations
 
+import calendar
 import logging
 import re
 import sqlite3
@@ -91,9 +92,24 @@ def _migration_1(conn: sqlite3.Connection) -> None:
     )
 
 
+def _migration_2(conn: sqlite3.Connection) -> None:
+    """Повторяющиеся дедлайны: правило, опорный день месяца и ссылка на следующий экземпляр."""
+    conn.executescript(
+        """
+        ALTER TABLE deadlines ADD COLUMN recurrence TEXT
+          CHECK (recurrence IN ('daily','weekly','monthly','yearly'));
+        ALTER TABLE deadlines ADD COLUMN recurrence_day INTEGER
+          CHECK (recurrence_day BETWEEN 1 AND 31);
+        ALTER TABLE deadlines ADD COLUMN next_id INTEGER
+          REFERENCES deadlines(id) ON DELETE SET NULL;
+        PRAGMA user_version = 2;
+        """
+    )
+
+
 # Порядок важен: миграция N переводит БД с user_version N-1 на N и сама ставит
 # `PRAGMA user_version = N` (PRAGMA не принимает параметры, поэтому — литералом в SQL).
-MIGRATIONS: list[Callable[[sqlite3.Connection], None]] = [_migration_1]
+MIGRATIONS: list[Callable[[sqlite3.Connection], None]] = [_migration_1, _migration_2]
 
 
 def migrate(conn: sqlite3.Connection) -> int:
@@ -150,6 +166,8 @@ class Deadline(TypedDict):
     created_at: str
     updated_at: str
     completed_at: str | None
+    recurrence: str | None
+    next_id: int | None
     is_overdue: bool
 
 
@@ -158,6 +176,7 @@ class Deadline(TypedDict):
 KINDS = ("study", "work", "other")
 STATUSES = ("todo", "in_progress", "done")
 PRIORITIES = (1, 2, 3)
+RECURRENCES = ("daily", "weekly", "monthly", "yearly")
 COLOR_RE = re.compile(r"#[0-9a-fA-F]{6}")
 DUE_RE = re.compile(r"\d{4}-\d{2}-\d{2}T\d{2}:\d{2}")
 
@@ -219,6 +238,15 @@ def _due_at(data: Payload) -> str:
         datetime.strptime(value, DUE_FORMAT)
     except ValueError as err:
         raise ValidationError("due_at", "Несуществующая дата или время") from err
+    return value
+
+
+def _recurrence(data: Payload) -> str | None:
+    value = data["recurrence"]
+    if value is None:
+        return None
+    if not isinstance(value, str) or value not in RECURRENCES:
+        raise ValidationError("recurrence", "Повтор: выберите один из вариантов")
     return value
 
 
@@ -342,7 +370,29 @@ def delete_category(conn: sqlite3.Connection, category_id: int) -> None:
 
 # --- Дедлайны ----------------------------------------------------------------
 
-DEADLINE_FIELDS = ("title", "description", "due_at", "category_id", "priority", "status")
+DEADLINE_FIELDS = ("title", "description", "due_at", "category_id", "priority", "status", "recurrence")
+
+
+def next_due(due_at: str, recurrence: str, anchor_day: int) -> str:
+    """Срок следующего экземпляра: ровно один шаг от due_at, время суток то же.
+
+    monthly/yearly берут день min(anchor_day, дней в месяце), чтобы 31-е не «уползало» в 28-е.
+    """
+    current = datetime.strptime(due_at, DUE_FORMAT)
+    try:
+        if recurrence in ("daily", "weekly"):
+            result = current + timedelta(days=1 if recurrence == "daily" else 7)
+        else:
+            year, month = current.year, current.month
+            if recurrence == "monthly":
+                year, month = (year + 1, 1) if month == 12 else (year, month + 1)
+            else:
+                year += 1
+            day = min(anchor_day, calendar.monthrange(year, month)[1])
+            result = current.replace(year=year, month=month, day=day)
+    except (OverflowError, ValueError) as err:
+        raise ValidationError("status", "Невозможно вычислить следующий срок повтора") from err
+    return result.strftime(DUE_FORMAT)
 
 
 def _deadline_from_row(row: sqlite3.Row, now: str) -> Deadline:
@@ -357,6 +407,8 @@ def _deadline_from_row(row: sqlite3.Row, now: str) -> Deadline:
         created_at=row["created_at"],
         updated_at=row["updated_at"],
         completed_at=row["completed_at"],
+        recurrence=row["recurrence"],
+        next_id=row["next_id"],
         is_overdue=row["status"] != "done" and row["due_at"] < now,
     )
 
@@ -375,7 +427,18 @@ def _validate_deadline(conn: sqlite3.Connection, data: Payload) -> dict[str, obj
         clean["priority"] = _priority(data)
     if "status" in data:
         clean["status"] = _choice(data, "status", STATUSES)
+    if "recurrence" in data:
+        clean["recurrence"] = _recurrence(data)
     return clean
+
+
+def _anchor_day(clean: Mapping[str, object], due_at: str, recurrence: object, current: int | None) -> int | None:
+    """Опорный день: заново из срока, когда пользователь задал срок или повтор; иначе прежний."""
+    if recurrence is None:
+        return None
+    if "due_at" in clean or "recurrence" in clean or current is None:
+        return int(due_at[8:10])
+    return current
 
 
 STATUS_FILTERS = (*STATUSES, "open")
@@ -530,11 +593,13 @@ def create_deadline(conn: sqlite3.Connection, data: Payload) -> Deadline:
     clean = _validate_deadline(conn, data)
     stamp = now_stamp()
     status = clean.get("status", "todo")
+    recurrence = clean.get("recurrence")
     with conn:
         cur = conn.execute(
             """INSERT INTO deadlines (title, description, due_at, category_id, priority,
-                                      status, created_at, updated_at, completed_at)
-               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+                                      status, created_at, updated_at, completed_at,
+                                      recurrence, recurrence_day)
+               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
             (
                 clean["title"],
                 clean.get("description", ""),
@@ -545,6 +610,8 @@ def create_deadline(conn: sqlite3.Connection, data: Payload) -> Deadline:
                 stamp,
                 stamp,
                 stamp if status == "done" else None,
+                recurrence,
+                _anchor_day(clean, str(clean["due_at"]), recurrence, None),
             ),
         )
     assert cur.lastrowid is not None
@@ -553,30 +620,59 @@ def create_deadline(conn: sqlite3.Connection, data: Payload) -> Deadline:
 
 
 def update_deadline(conn: sqlite3.Connection, deadline_id: int, data: Payload) -> Deadline:
+    return update_deadline_with_next(conn, deadline_id, data)[0]
+
+
+def update_deadline_with_next(
+    conn: sqlite3.Connection, deadline_id: int, data: Payload
+) -> tuple[Deadline, Deadline | None]:
+    """Обновляет дедлайн; при переходе повторяющегося в done в той же транзакции создаёт
+    следующий экземпляр. Возвращает (дедлайн, следующий — только если создан этим вызовом)."""
     _check_fields(data, DEADLINE_FIELDS)
     current = get_deadline(conn, deadline_id)
     clean = _validate_deadline(conn, data)
     if not clean:
-        return current
+        return current, None
+    row = conn.execute("SELECT recurrence_day FROM deadlines WHERE id = ?", (deadline_id,)).fetchone()
     stamp = now_stamp()
     new_status = clean.get("status", current["status"])
-    if new_status == "done" and current["status"] != "done":
+    completing = new_status == "done" and current["status"] != "done"
+    if completing:
         clean["completed_at"] = stamp
     elif new_status != "done":
         clean["completed_at"] = None
     clean["updated_at"] = stamp
     m = {**current, **clean}
+    anchor = _anchor_day(clean, str(m["due_at"]), m["recurrence"], row["recurrence_day"])
+    next_id = current["next_id"]
+    spawn = completing and m["recurrence"] is not None and next_id is None
+    next_at = next_due(str(m["due_at"]), str(m["recurrence"]), anchor or 1) if spawn else None
     with conn:
+        if next_at is not None:
+            cur = conn.execute(
+                """INSERT INTO deadlines (title, description, due_at, category_id, priority, status,
+                                          created_at, updated_at, recurrence, recurrence_day)
+                   VALUES (?, ?, ?, ?, ?, 'todo', ?, ?, ?, ?)""",
+                (m["title"], m["description"], next_at, m["category_id"], m["priority"],
+                 stamp, stamp, m["recurrence"], anchor),
+            )
+            next_id = cur.lastrowid
         conn.execute(
             """UPDATE deadlines SET title = ?, description = ?, due_at = ?, category_id = ?,
-                                     priority = ?, status = ?, updated_at = ?, completed_at = ?
+                                     priority = ?, status = ?, updated_at = ?, completed_at = ?,
+                                     recurrence = ?, recurrence_day = ?, next_id = ?
                WHERE id = ?""",
             (
                 m["title"], m["description"], m["due_at"], m["category_id"], m["priority"],
-                m["status"], m["updated_at"], m["completed_at"], deadline_id,
+                m["status"], m["updated_at"], m["completed_at"], m["recurrence"], anchor,
+                next_id, deadline_id,
             ),
         )
-    return get_deadline(conn, deadline_id)
+    if next_at is None:
+        return get_deadline(conn, deadline_id), None
+    assert next_id is not None
+    logger.info("deadline %s done, next instance id=%s", deadline_id, next_id)
+    return get_deadline(conn, deadline_id), get_deadline(conn, next_id)
 
 
 def delete_deadline(conn: sqlite3.Connection, deadline_id: int) -> None:

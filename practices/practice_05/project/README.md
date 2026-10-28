@@ -62,6 +62,10 @@ JSON API под `/api`, ошибки — `{"error": "...", "field": "..."}`:
 - `GET|POST /api/deadlines`, `GET|PATCH|DELETE /api/deadlines/{id}` — дедлайны.
   Фильтры списка: `status` (`todo|in_progress|done|open`), `category_id` (число или `none`),
   `q`, `from`, `to`, `sort` (`due|priority|created`);
+- Повтор: поле `recurrence` (`daily|weekly|monthly|yearly` или `null`). Когда повторяющийся
+  дедлайн переходит в `done`, сервер создаёт следующий (на один шаг позже срока) и возвращает его
+  в поле `next` ответа PATCH; у выполненного в `next_id` — id следующего. Контракт —
+  [specs/contracts/recurring.md](specs/contracts/recurring.md);
 - `GET /api/stats` — сводка: просрочено / сегодня / неделя / открыто / выполнено;
 - `GET /api/export.ics` — экспорт в iCalendar.
 

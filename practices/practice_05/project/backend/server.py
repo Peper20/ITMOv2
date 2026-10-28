@@ -148,7 +148,9 @@ def get_deadline(req: Request) -> Response:
 
 
 def update_deadline(req: Request) -> Response:
-    return Response(HTTPStatus.OK, db.update_deadline(req.conn, req.params["id"], req.body))
+    # next — экземпляр, созданный этим запросом (повторяющийся перешёл в done), иначе null.
+    deadline, nxt = db.update_deadline_with_next(req.conn, req.params["id"], req.body)
+    return Response(HTTPStatus.OK, {**deadline, "next": nxt})
 
 
 def delete_deadline(req: Request) -> Response:

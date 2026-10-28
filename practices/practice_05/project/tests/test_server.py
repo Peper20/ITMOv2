@@ -313,6 +313,65 @@ class QueryTests(ServerTestCase):
         )
 
 
+class RecurrenceApiTests(ServerTestCase):
+    """Контракт specs/contracts/recurring.md: поля, next в ответе PATCH, ошибки, stats, .ics."""
+
+    def create(self, **fields: object) -> dict[str, object]:
+        body: dict[str, object] = {"title": "Отчёт", "due_at": "2099-01-31T18:00", **fields}
+        status, dl = self.api_obj("POST", "/api/deadlines", body)
+        self.assertEqual(status, 201)
+        return dl
+
+    def patch(self, deadline_id: object, body: dict[str, object]) -> tuple[int, dict[str, object]]:
+        return self.api_obj("PATCH", f"/api/deadlines/{deadline_id}", body)
+
+    def test_fields_and_next_in_patch_only(self) -> None:
+        dl = self.create(recurrence="monthly")
+        self.assertEqual((dl["recurrence"], dl["next_id"]), ("monthly", None))
+        self.assertNotIn("next", dl)
+        self.assertIsNone(self.create()["recurrence"])
+        status, done = self.patch(dl["id"], {"status": "done"})
+        self.assertEqual(status, 200)
+        nxt = done["next"]
+        assert isinstance(nxt, dict)
+        self.assertEqual(nxt["due_at"], "2099-02-28T18:00")  # pyright: ignore[reportUnknownArgumentType]
+        self.assertEqual(done["next_id"], nxt["id"])
+        self.assertNotIn("next", self.api_obj("GET", f"/api/deadlines/{dl['id']}")[1])
+        _, reopened = self.patch(dl["id"], {"status": "todo"})
+        _, again = self.patch(dl["id"], {"status": "done"})
+        self.assertIsNone(reopened["next"])
+        self.assertIsNone(again["next"])
+        self.assertEqual(again["next_id"], nxt["id"])
+        _, unchanged = self.patch(dl["id"], {})
+        self.assertIsNone(unchanged["next"])
+
+    def test_errors(self) -> None:
+        dl = self.create()
+        status, err = self.patch(dl["id"], {"recurrence": "hourly"})
+        self.assertEqual(
+            (status, err["field"], err["error"]), (400, "recurrence", "Повтор: выберите один из вариантов")
+        )
+        status, err = self.patch(dl["id"], {"next_id": 1})
+        self.assertEqual((status, err["field"]), (400, "next_id"))
+        edge = self.create(due_at="9999-12-31T10:00", recurrence="daily")
+        status, err = self.patch(edge["id"], {"status": "done"})
+        self.assertEqual((status, err["field"]), (400, "status"))
+        self.assertEqual(self.api_obj("GET", f"/api/deadlines/{edge['id']}")[1]["status"], "todo")
+
+    def test_stats_and_ics(self) -> None:
+        dl = self.create(title="Повтор-ics", due_at="2099-03-01T10:00", recurrence="weekly")
+        _, before = self.api_obj("GET", "/api/stats")
+        _, done = self.patch(dl["id"], {"status": "done"})
+        _, after = self.api_obj("GET", "/api/stats")
+        self.assertEqual((after["open"], after["done"]), (before["open"], int(str(before["done"])) + 1))
+        _, _, body = self.request("GET", "/api/export.ics")
+        text = body.decode("utf-8")
+        nxt = done["next"]
+        assert isinstance(nxt, dict)
+        self.assertIn(f"UID:deadline-{nxt['id']}@sroki", text)
+        self.assertNotIn(f"UID:deadline-{dl['id']}@sroki", text)
+        self.assertNotIn("RRULE", text)
+
 class IcsTests(unittest.TestCase):
     def test_escape(self) -> None:
         self.assertEqual(server.ics_escape("a\\b;c,d"), "a\\\\b\\;c\\,d")
@@ -344,7 +403,7 @@ class IcsTests(unittest.TestCase):
         dl = db.Deadline(
             id=1, title="Отчёт; итог, финал", description="Строка 1\nСтрока 2 " + "ы" * 60,
             due_at="2026-12-31T23:45", category_id=7, priority=3, status="todo",
-            created_at="", updated_at="", completed_at=None, is_overdue=False,
+            created_at="", updated_at="", completed_at=None, recurrence=None, next_id=None, is_overdue=False,
         )
         text = server.build_ics([dl], {7: "Курс, 1"}, datetime(2026, 10, 6, 12, 0))
         self.assertIn("SUMMARY:Отчёт\\; итог\\, финал\r\n", text)
