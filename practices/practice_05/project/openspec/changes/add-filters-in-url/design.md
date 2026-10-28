@@ -23,6 +23,30 @@
 - Чтение: `start()` берёт фильтры из хэша до первого `reloadAll()`; проверка существования
   категории — уже существующая ветка в `loadCategories()`.
 
+```mermaid
+sequenceDiagram
+    actor U as Пользователь
+    participant T as Toolbar
+    participant A as AppState
+    participant H as location.hash
+    participant API as /api/deadlines
+
+    Note over U,API: Открытие страницы
+    U->>H: открывает #35;view=…&date=…&cat=3&q=лаба
+    A->>H: start(): parseHash()
+    H-->>A: view, date, category, q
+    A->>API: reloadAll() → categories, затем deadlines с фильтрами
+    alt категории cat нет
+        A->>A: loadCategories(): filterCategory = ""
+    end
+
+    Note over U,API: Изменение или сброс фильтра
+    U->>T: категория / поиск (debounce) / «Сбросить»
+    T->>A: refresh() или resetFilters()
+    A->>H: #35;writeHash() (replaceState, без cat/q если пусто)
+    A->>API: loadPeriod() + loadSide()
+```
+
 ## Risks / Trade-offs
 
 - [Кириллица в `q` кодируется в адресе] → `URLSearchParams` кодирует и декодирует сам.
