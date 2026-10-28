@@ -28,6 +28,9 @@ export function span(ms: number): string {
 export const timeOf = (d: Deadline) => d.due_at.slice(11, 16);
 export const dayOf = (d: Deadline) => d.due_at.slice(0, 10);
 export const isDone = (d: Deadline) => d.status === "done";
+
+/** Активен ли фильтр: выбрана категория (в т. ч. "none") или поиск не пуст без пробелов. */
+export const hasActiveFilters = (category: string, q: string) => category !== "" || q.trim() !== "";
 /** Пересчитываем на клиенте, чтобы «просрочено» обновлялось без запроса. */
 export const isOverdue = (d: Deadline, now: Date) => !isDone(d) && (parseLocal(d.due_at) ?? now) < now;
 export const capitalize = (s: string) => s.charAt(0).toUpperCase() + s.slice(1);

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { Deadline } from "./api";
-import { countDeadlines, describe as describeDl, fitCount, groupByDay, isOverdue, plural, span, splitUrgent, whenText } from "./deadlines";
+import { countDeadlines, describe as describeDl, fitCount, groupByDay, hasActiveFilters, isOverdue, plural, span, splitUrgent, whenText } from "./deadlines";
 
 const now = new Date(2026, 9, 7, 12, 0);
 let seq = 0;
@@ -121,5 +121,17 @@ describe("раскладка полосок", () => {
   it("23:59 в полоске не показываем", () => {
     expect(chipTime(dl("2026-10-07T23:59"))).toBe("");
     expect(chipTime(dl("2026-10-07T09:30"))).toBe("09:30");
+  });
+});
+
+describe("hasActiveFilters", () => {
+  it("нет фильтров — пустая категория и поиск из пробелов", () => {
+    expect(hasActiveFilters("", "")).toBe(false);
+    expect(hasActiveFilters("", "   ")).toBe(false);
+  });
+  it("категория, «Без категории» или текст поиска", () => {
+    expect(hasActiveFilters("3", "")).toBe(true);
+    expect(hasActiveFilters("none", "")).toBe(true);
+    expect(hasActiveFilters("", " лаба ")).toBe(true);
   });
 });

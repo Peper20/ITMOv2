@@ -6,7 +6,7 @@ import {
   DAY, addDays, inPeriod, inRange, lastDay, parseLocal, parseYmd, periodTitle, shiftDate, stamp,
   startOfDay, visibleRange, ymd, type View,
 } from "./dates";
-import { groupByDay } from "./deadlines";
+import { groupByDay, hasActiveFilters } from "./deadlines";
 import { formatHash, parseHash } from "./route";
 
 function storageGet(key: string): string | null {
@@ -79,6 +79,7 @@ class AppState {
   activeDay = $derived(inRange(this.range, parseYmd(this.cursor) ?? this.anchor) ? this.cursor : ymd(this.anchor));
   filters = $derived<DeadlineFilters>({ category_id: this.filterCategory as DeadlineFilters["category_id"], q: this.q.trim() });
   exportHref = $derived(api.exportUrl(this.filters));
+  hasFilters = $derived(hasActiveFilters(this.filterCategory, this.q));
   /** Выбранная в фильтре конкретная категория — подставляется в новые дедлайны. */
   presetCategory = $derived(/^\d+$/.test(this.filterCategory) ? Number(this.filterCategory) : null);
 
@@ -169,6 +170,13 @@ class AppState {
     } catch {
       /* панель не критична: ошибку связи покажет баннер календаря */
     }
+  }
+
+  /** Сбросить категорию и поиск и перезагрузить без фильтров; вид и период не трогаем. */
+  resetFilters() {
+    this.filterCategory = "";
+    this.q = "";
+    return this.refresh();
   }
 
   refresh() {

@@ -16,6 +16,12 @@
     clearTimeout(timer);
     timer = setTimeout(() => app.refresh(), 300);
   }
+
+  function reset() {
+    clearTimeout(timer); // иначе отложенный поиск со старым текстом догонит сброс
+    app.resetFilters();
+    document.getElementById("filter-q")?.focus();
+  }
 </script>
 
 <header class="bar">
@@ -60,6 +66,11 @@
       <Icon name="search" />
       <input id="filter-q" type="search" placeholder="Поиск по сроку" autocomplete="off" bind:value={app.q} oninput={search} />
     </label>
+    {#if app.hasFilters}
+      <button type="button" class="btn btn--ghost reset" title="Сбросить фильтры" aria-label="Сбросить фильтры" onclick={reset}>
+        <Icon name="close" /><span>Сбросить</span>
+      </button>
+    {/if}
   </form>
 
   <button type="button" class="btn btn--primary new" id="new-deadline" onclick={() => app.openDeadline(null)}>
@@ -112,6 +123,7 @@
   .filters__q { position: relative; flex: 1 1 12rem; min-width: 0; color: var(--ink-3); }
   .filters__q :global(svg) { position: absolute; left: 0.625rem; top: 50%; transform: translateY(-50%); pointer-events: none; }
   .filters__q input { padding-left: 2rem; }
+  .reset { flex: none; gap: var(--sp-1); padding: 0 var(--sp-2); }
 
   .tools { grid-area: tools; justify-self: end; display: flex; gap: 2px; }
   .side-toggle { display: none; }
