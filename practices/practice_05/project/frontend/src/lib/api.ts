@@ -3,6 +3,7 @@
 export type Kind = "study" | "work" | "other";
 export type Status = "todo" | "in_progress" | "done";
 export type Priority = 1 | 2 | 3;
+export type Recurrence = "daily" | "weekly" | "monthly" | "yearly";
 
 export interface Category {
   id: number;
@@ -24,8 +25,13 @@ export interface Deadline {
   created_at: string;
   updated_at: string;
   completed_at: string | null;
+  recurrence: Recurrence | null;
+  next_id: number | null; // следующий экземпляр повтора (specs/contracts/recurring.md)
   is_overdue: boolean;
 }
+
+/** Ответ PATCH: next — экземпляр, созданный именно этим запросом, иначе null. */
+export type UpdatedDeadline = Deadline & { next: Deadline | null };
 
 export interface Stats {
   overdue: number;
@@ -48,6 +54,7 @@ export interface DeadlineInput {
   category_id?: number | null;
   priority?: Priority;
   status?: Status;
+  recurrence?: Recurrence | null;
 }
 
 export interface DeadlineFilters {
@@ -112,7 +119,7 @@ export const api = {
 
   listDeadlines: (filters: DeadlineFilters = {}) => request<Deadline[]>("GET", "/deadlines", undefined, filters),
   createDeadline: (data: DeadlineInput) => request<Deadline>("POST", "/deadlines", data),
-  updateDeadline: (id: number, patch: Partial<DeadlineInput>) => request<Deadline>("PATCH", `/deadlines/${id}`, patch),
+  updateDeadline: (id: number, patch: Partial<DeadlineInput>) => request<UpdatedDeadline>("PATCH", `/deadlines/${id}`, patch),
   deleteDeadline: (id: number) => request<void>("DELETE", `/deadlines/${id}`),
 
   stats: () => request<Stats>("GET", "/stats"),

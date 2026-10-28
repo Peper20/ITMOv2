@@ -2,8 +2,9 @@
   import type { Deadline } from "../lib/api";
   import { app } from "../lib/app.svelte";
   import { WEEKDAYS, fmtWDM, weekdayIndex, ymd } from "../lib/dates";
-  import { countDeadlines, plural, splitUrgent, weekLoad, whenText } from "../lib/deadlines";
+  import { countDeadlines, isRepeating, plural, repeatText, splitUrgent, weekLoad, whenText } from "../lib/deadlines";
   import { decor } from "../lib/decor";
+  import Icon from "./Icon.svelte";
 
   // Сводка: главный сигнал — просроченные; нагрузка на 7 дней (клик — к дню); списки срочного.
   const groups = $derived(splitUrgent(app.side, app.now));
@@ -26,7 +27,7 @@
         {@const l = look(d)}
         <li>
           <button type="button" class="item {l.class}" style={l.style} onclick={() => app.openFromSide(d)}>
-            <span class="dl__title">{d.title}</span>
+            <span class="dl__title">{d.title}{#if d.recurrence && isRepeating(d)}<span class="rep" title={repeatText(d.recurrence)}><Icon name="repeat" /><span class="visually-hidden">, {repeatText(d.recurrence).toLowerCase()}</span></span>{/if}</span>
             <span class="when">{whenText(d, app.now)}</span>
           </button>
         </li>
@@ -71,6 +72,8 @@
 </aside>
 
 <style>
+  .rep { display: inline-flex; vertical-align: -0.125em; margin-left: 0.3em; opacity: 0.7; }
+  .rep :global(svg) { width: 0.75rem; height: 0.75rem; }
   .side { display: flex; flex-direction: column; gap: var(--sp-5); padding: var(--sp-4) var(--sp-4) calc(var(--sp-5) + 4rem); background: var(--tile); box-shadow: var(--shadow-tile); }
   .side > :global(*) { flex-shrink: 0; }
 

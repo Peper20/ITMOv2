@@ -1,6 +1,6 @@
 <script lang="ts">
   // Иконки 16×16 штрихом currentColor; декоративные — подпись даёт кнопка.
-  type Name = "prev" | "next" | "close" | "trash" | "panel" | "plus" | "search" | "download" | "tags" | "sun" | "moon" | "auto";
+  type Name = "prev" | "next" | "close" | "trash" | "panel" | "plus" | "search" | "download" | "tags" | "sun" | "moon" | "auto" | "repeat";
   let { name }: { name: Name } = $props();
 </script>
 
@@ -15,6 +15,7 @@
   {:else if name === "tags"}<path d="M2.5 2.5h5l6 6-5 5-6-6z" stroke-width="1.4" /><circle cx="5.5" cy="5.5" r="1" fill="currentColor" stroke="none" />
   {:else if name === "sun"}<circle cx="8" cy="8" r="2.75" /><path d="M8 1.5v1.5M8 13v1.5M1.5 8H3M13 8h1.5M3.4 3.4l1 1M11.6 11.6l1 1M3.4 12.6l1-1M11.6 4.4l1-1" stroke-width="1.4" />
   {:else if name === "moon"}<path d="M13 9.5A5.5 5.5 0 0 1 6.5 3a5.5 5.5 0 1 0 6.5 6.5z" />
+  {:else if name === "repeat"}<path d="M2.75 7.25a5 5 0 0 1 8.9-2.65M13.25 8.75a5 5 0 0 1-8.9 2.65" /><path d="M12 1.75v3h-3M4 14.25v-3h3" />
   {:else if name === "auto"}<circle cx="8" cy="8" r="5.5" /><path d="M8 2.5v11a5.5 5.5 0 0 0 0-11z" fill="currentColor" stroke="none" />
   {:else}<rect x="1.75" y="2.75" width="12.5" height="10.5" rx="1.5" stroke-width="1.4" /><path d="M10 3v10" stroke-width="1.4" />
   {/if}

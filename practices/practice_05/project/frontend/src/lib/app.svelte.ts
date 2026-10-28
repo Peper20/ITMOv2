@@ -1,12 +1,12 @@
 /** Состояние приложения на рунах: период, данные, фильтры, открытые окна. */
 
 import { tick } from "svelte";
-import { api, type Category, type Deadline, type DeadlineFilters, type Stats } from "./api";
+import { api, type Category, type Deadline, type DeadlineFilters, type Stats, type UpdatedDeadline } from "./api";
 import {
   DAY, addDays, inPeriod, inRange, lastDay, parseLocal, parseYmd, periodTitle, shiftDate, stamp,
   startOfDay, visibleRange, ymd, type View,
 } from "./dates";
-import { groupByDay, hasActiveFilters } from "./deadlines";
+import { dayOf, groupByDay, hasActiveFilters, isDone, keptText, nextText } from "./deadlines";
 import { formatHash, parseHash } from "./route";
 
 function storageGet(key: string): string | null {
@@ -61,6 +61,8 @@ class AppState {
   stats = $state.raw<Stats | null>(null);
   categories = $state.raw<Category[]>([]);
   banner = $state("");
+  /** Сообщение о следующем экземпляре повтора; date — день для «Показать». */
+  notice = $state<{ text: string; date: string | null } | null>(null);
 
   filterCategory = $state(""); // "" — все, "none" — без категории, иначе id
   q = $state("");
@@ -289,10 +291,30 @@ class AppState {
     }
   }
 
+  /** После PATCH: создан следующий — «Следующий — …»; снята отметка у породившего — «…остался».
+   *  Зовётся до refresh(), пока в загруженных данных есть следующий. */
+  afterUpdate(before: Deadline, result: UpdatedDeadline) {
+    if (result.next) {
+      this.notice = { text: nextText(result.next), date: dayOf(result.next) };
+    } else if (isDone(before) && !isDone(result) && result.next_id !== null) {
+      const kept = [...this.deadlines, ...this.side].find((x) => x.id === result.next_id);
+      this.notice = { text: keptText(kept), date: kept ? dayOf(kept) : null };
+    }
+  }
+
+  /** «Показать» в сообщении: перейти к дню следующего и подсветить его, как из боковой панели. */
+  showNotice() {
+    const date = this.notice?.date;
+    this.notice = null;
+    if (!date) return;
+    this.flashDate = date;
+    this.navigateTo(parseYmd(date) ?? this.anchor);
+  }
+
   /** Быстрая отметка «готово»; false — не получилось (ошибка в баннере). */
   async setDone(d: Deadline, done: boolean): Promise<boolean> {
     try {
-      await api.updateDeadline(d.id, { status: done ? "done" : "todo" });
+      this.afterUpdate(d, await api.updateDeadline(d.id, { status: done ? "done" : "todo" }));
       await this.refresh();
       return true;
     } catch (err) {

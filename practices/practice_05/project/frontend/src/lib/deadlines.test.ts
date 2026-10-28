@@ -1,13 +1,13 @@
 import { describe, expect, it } from "vitest";
 import type { Deadline } from "./api";
-import { countDeadlines, describe as describeDl, fitCount, groupByDay, hasActiveFilters, isOverdue, plural, span, splitUrgent, whenText } from "./deadlines";
+import { countDeadlines, describe as describeDl, fitCount, groupByDay, hasActiveFilters, isOverdue, isRepeating, keptText, nextText, plural, span, splitUrgent, whenText } from "./deadlines";
 
 const now = new Date(2026, 9, 7, 12, 0);
 let seq = 0;
 function dl(due_at: string, extra: Partial<Deadline> = {}): Deadline {
   return {
     id: ++seq, title: `Срок ${seq}`, description: "", due_at, category_id: null, priority: 2, status: "todo",
-    created_at: "", updated_at: "", completed_at: null, is_overdue: false, ...extra,
+    created_at: "", updated_at: "", completed_at: null, recurrence: null, next_id: null, is_overdue: false, ...extra,
   };
 }
 
@@ -133,5 +133,24 @@ describe("hasActiveFilters", () => {
     expect(hasActiveFilters("3", "")).toBe(true);
     expect(hasActiveFilters("none", "")).toBe(true);
     expect(hasActiveFilters("", " лаба ")).toBe(true);
+  });
+});
+
+describe("повтор", () => {
+  it("значок только у открытого повторяющегося", () => {
+    expect(isRepeating(dl("2026-11-06T18:00", { recurrence: "weekly" }))).toBe(true);
+    expect(isRepeating(dl("2026-11-06T18:00", { recurrence: "weekly", status: "done" }))).toBe(false);
+    expect(isRepeating(dl("2026-11-06T18:00"))).toBe(false);
+  });
+  it("озвучка называет правило после приоритета", () => {
+    const d = dl("2026-11-06T18:00", { recurrence: "weekly", priority: 3 });
+    expect(describeDl(d, now, "Курс")).toMatch(/высокий приоритет, повторяется каждую неделю$/);
+    expect(describeDl({ ...d, status: "done" }, now, "Курс")).not.toMatch(/повторяется/);
+  });
+  it("сообщения о следующем", () => {
+    const next = dl("2026-11-13T18:00", { recurrence: "weekly" });
+    expect(nextText(next)).toBe("Следующий — пт, 13 нояб., 18:00");
+    expect(keptText(next)).toBe("Следующий дедлайн на пт, 13 нояб., 18:00 остался");
+    expect(keptText(undefined)).toBe("Следующий дедлайн остался");
   });
 });

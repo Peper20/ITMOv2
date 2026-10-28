@@ -29,7 +29,7 @@
 ```text
 frontend/src/lib/api.ts             — Recurrence, поля Deadline, updateDeadline → Deadline & { next }
 frontend/src/lib/deadlines.ts       — RECURRENCE_LABEL, recurrenceHint(), describe() + «повторяется …», nextText()
-frontend/src/lib/app.svelte.ts      — notice (сообщение о следующем), afterUpdate(), showNext()
+frontend/src/lib/app.svelte.ts      — notice (сообщение о следующем), afterUpdate(), showNotice()
 frontend/src/components/NextNotice.svelte — сообщение: role=status, 8 с, пауза при наведении/фокусе, Esc, «Показать»
 frontend/src/components/DeadlineDialog.svelte — поле «Повтор» после «Срок», подсказка, ошибка field=recurrence
 frontend/src/components/{Chip,DeadlineCard,Sidebar}.svelte — значок повтора; Card: флажок неактивен во время запроса

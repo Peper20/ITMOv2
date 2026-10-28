@@ -7,6 +7,7 @@
   import CategoriesDialog from "./components/CategoriesDialog.svelte";
   import DayDialog from "./components/DayDialog.svelte";
   import DeadlineDialog from "./components/DeadlineDialog.svelte";
+  import NextNotice from "./components/NextNotice.svelte";
   import Sidebar from "./components/Sidebar.svelte";
   import Toolbar from "./components/Toolbar.svelte";
 
@@ -79,6 +80,7 @@
 </div>
 
 <DeadlineDialog />
+<NextNotice />
 <DayDialog />
 <CategoriesDialog />
 

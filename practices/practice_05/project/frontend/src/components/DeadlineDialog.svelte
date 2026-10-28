@@ -1,10 +1,10 @@
 <script lang="ts">
   import { tick, untrack } from "svelte";
-  import { ApiError, api, type DeadlineInput, type Priority, type Status } from "../lib/api";
+  import { ApiError, api, type Deadline, type DeadlineInput, type Priority, type Recurrence, type Status } from "../lib/api";
   import { app } from "../lib/app.svelte";
   import { Armed } from "../lib/armed.svelte";
   import { addDays, fmtLong, formatRuDate, maskRuDate, parseLocal, parseRuDate, parseTime, startOfDay, ymd } from "../lib/dates";
-  import { PRIORITY_LABEL, STATUS_LABEL, capitalize, isDone, relativeDue } from "../lib/deadlines";
+  import { PRIORITY_LABEL, RECURRENCE_LABEL, STATUS_LABEL, capitalize, isDone, relativeDue } from "../lib/deadlines";
   import Icon from "./Icon.svelte";
   import Modal from "./Modal.svelte";
 
@@ -15,7 +15,7 @@
   const DAYS = [["Сегодня", 0], ["Завтра", 1], ["Через неделю", 7]] as const;
   const dayPreset = (n: number) => formatRuDate(ymd(addDays(startOfDay(app.now), n)));
 
-  let form = $state({ title: "", date: "", time: "", category_id: "", priority: 2 as Priority, status: "todo" as Status, description: "" });
+  let form = $state({ title: "", date: "", time: "", recurrence: "" as Recurrence | "", category_id: "", priority: 2 as Priority, status: "todo" as Status, description: "" });
   let errors = $state<Record<string, string>>({});
   let general = $state("");
   let busy = $state(false);
@@ -42,6 +42,7 @@
       title: d?.title ?? "",
       date: formatRuDate(e.due),
       time: e.due.slice(11, 16),
+      recurrence: d?.recurrence ?? "",
       category_id: d ? String(d.category_id ?? "") : app.presetCategory === null ? "" : String(app.presetCategory),
       priority: d?.priority ?? 2,
       status: d?.status ?? "todo",
@@ -89,18 +90,24 @@
     const data: DeadlineInput = {
       title: form.title.trim(),
       due_at: `${date}T${time}`,
+      recurrence: form.recurrence || null,
       category_id: form.category_id ? Number(form.category_id) : null,
       priority: Number(form.priority) as Priority,
       status: form.status,
       description: form.description,
     };
-    const id = editing?.id;
-    run(() => (id ? api.updateDeadline(id, data) : api.createDeadline(data)));
+    const d = editing;
+    run(() => (d ? update(d, data) : api.createDeadline(data)));
+  }
+
+  /** PATCH и сообщение о следующем экземпляре повтора (app.afterUpdate). */
+  async function update(d: Deadline, patch: Partial<DeadlineInput>) {
+    app.afterUpdate(d, await api.updateDeadline(d.id, patch));
   }
 
   function toggleDone() {
     const d = editing;
-    if (d) run(() => api.updateDeadline(d.id, { status: isDone(d) ? "todo" : "done" }));
+    if (d) run(() => update(d, { status: isDone(d) ? "todo" : "done" }));
   }
 
   function remove() {
@@ -148,6 +155,16 @@
       {@render fieldError("due_at")}
       {@render fieldError("due_time")}
     </fieldset>
+
+    <label class="field">
+      <span class="field__label">Повтор</span>
+      <select name="recurrence" bind:value={form.recurrence} {...err("recurrence")} aria-describedby={errors.recurrence ? "dd-recurrence-err" : form.recurrence ? "dd-recurrence-hint" : undefined}>
+        <option value="">Не повторять</option>
+        {#each Object.entries(RECURRENCE_LABEL) as [value, label] (value)}<option {value}>{label}</option>{/each}
+      </select>
+      {#if form.recurrence && !errors.recurrence}<span class="field__hint caption" id="dd-recurrence-hint">Когда отметите выполненным, появится следующий</span>{/if}
+      {@render fieldError("recurrence")}
+    </label>
 
     <fieldset class="field prio-set">
       <legend class="field__label">Приоритет</legend>

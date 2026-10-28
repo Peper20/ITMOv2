@@ -1,10 +1,13 @@
 /** Тексты и группировка дедлайнов — чистые функции, без DOM. */
 
-import type { Deadline, Priority, Status } from "./api";
+import type { Deadline, Priority, Recurrence, Status } from "./api";
 import { DAY, HOUR, MIN, addDays, daysBetween, fmtDM, fmtLong, fmtWDM, parseLocal, startOfDay, ymd } from "./dates";
 
 export const PRIORITY_LABEL: Record<Priority, string> = { 1: "Низкий", 2: "Обычный", 3: "Высокий" };
 export const STATUS_LABEL: Record<Status, string> = { todo: "Не начат", in_progress: "В работе", done: "Выполнен" };
+export const RECURRENCE_LABEL: Record<Recurrence, string> = {
+  daily: "Каждый день", weekly: "Каждую неделю", monthly: "Каждый месяц", yearly: "Каждый год",
+};
 
 /** Русское множественное число: plural(3, ["день", "дня", "дней"]). */
 export function plural(n: number, [one, few, many]: [string, string, string]): string {
@@ -29,6 +32,18 @@ export const timeOf = (d: Deadline) => d.due_at.slice(11, 16);
 export const dayOf = (d: Deadline) => d.due_at.slice(0, 10);
 export const isDone = (d: Deadline) => d.status === "done";
 
+/** Значок повтора — только у открытого экземпляра: у выполненного следующий уже создан. */
+export const isRepeating = (d: Deadline) => d.recurrence !== null && !isDone(d);
+/** «Повторяется каждую неделю». */
+export const repeatText = (r: Recurrence) => `Повторяется ${RECURRENCE_LABEL[r].toLowerCase()}`;
+/** «пт, 13 нояб., 18:00». */
+const shortWhen = (d: Deadline) => `${fmtWDM.format(parseLocal(d.due_at) ?? new Date())}, ${timeOf(d)}`;
+/** Сообщение после отметки: дата следующего — только из ответа сервера. */
+export const nextText = (next: Deadline) => `Следующий — ${shortWhen(next)}`;
+/** Сообщение после снятия отметки; next — если следующий есть в загруженных данных. */
+export const keptText = (next: Deadline | undefined) =>
+  next ? `Следующий дедлайн на ${shortWhen(next)} остался` : "Следующий дедлайн остался";
+
 /** Активен ли фильтр: выбрана категория (в т. ч. "none") или поиск не пуст без пробелов. */
 export const hasActiveFilters = (category: string, q: string) => category !== "" || q.trim() !== "";
 /** Пересчитываем на клиенте, чтобы «просрочено» обновлялось без запроса. */
@@ -47,6 +62,7 @@ export function whenText(d: Deadline, now: Date): string {
 export function describe(d: Deadline, now: Date, categoryName: string | undefined): string {
   const parts = [d.title, `${fmtLong.format(parseLocal(d.due_at) ?? now)}, ${timeOf(d)}`, categoryName ?? "без категории"];
   if (d.priority !== 2) parts.push(`${PRIORITY_LABEL[d.priority].toLowerCase()} приоритет`);
+  if (d.recurrence && isRepeating(d)) parts.push(repeatText(d.recurrence).toLowerCase());
   if (isOverdue(d, now)) parts.push("просрочен");
   else if (d.status !== "todo") parts.push(STATUS_LABEL[d.status].toLowerCase());
   return parts.join(", ");

@@ -2,7 +2,7 @@
   import type { Deadline } from "../lib/api";
   import { app } from "../lib/app.svelte";
   import { Armed } from "../lib/armed.svelte";
-  import { describe, isDone, isOverdue, STATUS_LABEL, timeOf } from "../lib/deadlines";
+  import { describe, isDone, isOverdue, isRepeating, repeatText, STATUS_LABEL, timeOf } from "../lib/deadlines";
   import { decor } from "../lib/decor";
   import Icon from "./Icon.svelte";
 
@@ -18,7 +18,7 @@
       .join(", "),
   );
   const armed = new Armed();
-  let busy = false;
+  let busy = $state(false); // флажок «неактивен», пока идёт запрос (фокус не теряем: aria-disabled, а не disabled)
 
   async function toggle(e: Event & { currentTarget: HTMLInputElement }) {
     const box = e.currentTarget;
@@ -39,12 +39,13 @@
 
 <li class="card {look.class}" style={look.style}>
   <label class="check">
-    <input type="checkbox" tabindex={tab} checked={isDone(d)} onchange={toggle} />
+    <input type="checkbox" tabindex={tab} checked={isDone(d)} aria-disabled={busy} onchange={toggle} />
     <span class="visually-hidden">Готово: {d.title}</span>
   </label>
   <button type="button" class="open" tabindex={tab} aria-label="Изменить: {describe(d, app.now, cat?.name)}" onclick={() => app.openDeadline(d)}>
     <span class="top">
       <span class="dl__time">{timeOf(d)}</span>
+      {#if d.recurrence && isRepeating(d)}<span class="rep" title={repeatText(d.recurrence)} aria-hidden="true"><Icon name="repeat" /></span>{/if}
       {#if d.priority === 3 && !isDone(d)}<span class="prio" aria-hidden="true">!</span>{/if}
     </span>
     <span class="dl__title">{d.title}</span>
@@ -66,6 +67,8 @@
 </li>
 
 <style>
+  .rep { display: inline-flex; opacity: 0.75; }
+  .rep :global(svg) { width: 0.75rem; height: 0.75rem; }
   /* Флажок и «удалить» — в строке времени, название — на всю ширину карточки */
   .card { display: block; padding: var(--sp-2) var(--sp-2) var(--sp-2) 0.75rem; animation: rise 180ms var(--ease); }
   .check { position: absolute; left: 0.75rem; top: var(--sp-2); display: flex; cursor: pointer; }

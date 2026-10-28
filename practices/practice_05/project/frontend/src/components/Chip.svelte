@@ -1,7 +1,8 @@
 <script lang="ts">
   import type { Deadline } from "../lib/api";
   import { app } from "../lib/app.svelte";
-  import { chipTime, describe, isDone, timeOf } from "../lib/deadlines";
+  import { chipTime, describe, isDone, isRepeating, repeatText, timeOf } from "../lib/deadlines";
+  import Icon from "./Icon.svelte";
   import { decor } from "../lib/decor";
 
   // Магнитная полоска дедлайна в ячейке месяца; на телефоне — точка-маркер.
@@ -17,12 +18,13 @@
   class:is-tall={tall}
   style={look.style}
   tabindex={tab}
-  title="{timeOf(d)} {d.title}"
+  title="{timeOf(d)} {d.title}{d.recurrence && isRepeating(d) ? ` · ${repeatText(d.recurrence)}` : ''}"
   aria-label={describe(d, app.now, cat?.name)}
   onclick={() => app.openDeadline(d)}
 >
   {#if time}<span class="dl__time">{time}</span>{/if}
   <span class="dl__title">{d.title}</span>
+  {#if d.recurrence && isRepeating(d)}<span class="rep" aria-hidden="true"><Icon name="repeat" /></span>{/if}
   {#if d.priority === 3 && !isDone(d)}<span class="prio" aria-hidden="true">!</span>{/if}
 </button>
 
@@ -35,6 +37,8 @@
   }
   .chip:focus-visible { outline-offset: 1px; }
   .dl__time { flex: none; }
+  .rep { flex: none; display: inline-flex; opacity: 0.75; }
+  .rep :global(svg) { width: 0.75rem; height: 0.75rem; }
   .dl__title { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; }
   .chip.is-tall { align-items: flex-start; height: var(--chip-h2); padding-top: 0.25rem; padding-bottom: 0.25rem; white-space: normal; }
   .chip.is-tall .dl__time { line-height: 1.35; }
