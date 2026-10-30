@@ -1,0 +1,7 @@
+{
+  "name": "sroki-e2e",
+  "private": true,
+  "type": "module",
+  "description": "Сквозные проверки «Сроков» в chromium (вне приложения, чтобы не добавлять ему зависимостей)",
+  "devDependencies": { "puppeteer-core": "24.x" }
+}
