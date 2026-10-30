@@ -1,5 +1,7 @@
 // Сквозная проверка ДЗ: повторяющиеся дедлайны (specs/002-recurring-ui + 001-recurring-logic).
 // Запуск: node recurring.mjs http://127.0.0.1:8765 [скриншоты-каталог] — сервер на пустой БД.
+import { execFileSync } from "node:child_process";
+import { rmSync } from "node:fs";
 import puppeteer from "puppeteer-core";
 
 const [base, shots = "."] = process.argv.slice(2);
@@ -21,7 +23,7 @@ const open = async (hash) => {
 };
 const card = (day) => `[data-day="${day}"] li.card`;
 
-// 1. Создание с повтором через окно (US1). Шаги 1–3 пишутся в демо-видео hw-demo.webm.
+// 1. Создание с повтором через окно (US1). Шаги 1–3 пишутся в демо-видео hw-demo.mp4.
 await open("view=week&date=2026-11-06");
 const recorder = await page.screencast({ path: `${shots}/hw-demo.webm` });
 const pause = () => sleep(900); // чтобы в демо успеть рассмотреть шаг
@@ -79,6 +81,9 @@ text = await notice();
 const series = await titled("Отчёт по практике");
 await pause();
 await recorder.stop();
+// puppeteer пишет VP9; перекодируем в H.264 mp4, чтобы видео открывалось везде.
+execFileSync("ffmpeg", ["-y", "-loglevel", "error", "-i", `${shots}/hw-demo.webm`, "-c:v", "libx264", "-pix_fmt", "yuv420p", "-movflags", "+faststart", `${shots}/hw-demo.mp4`]);
+rmSync(`${shots}/hw-demo.webm`);
 check("Повторная отметка без сообщения и без дубля", text === "" && series.length === 2, `сообщение «${text}», экземпляров ${series.length}`);
 
 // 4. Двойной клик — один следующий (SC-006)
