@@ -1,0 +1,64 @@
+[A01 SQLi /profile (все профили, без токена)]
+  HTTP 200
+  [{"id": 1, "name": "TEST_ALICE", "email": "alice@example.invalid", "address": "TEST_ADDRESS_A"}, {"id": 2, "name": "TEST_BOB", "email": "bob@example.invalid", "address": "TEST_ADDRESS_B"}]
+
+[A02 SQLi /search UNION (схема БД)]
+  HTTP 200
+  [{"id": 1, "name": "CREATE TABLE orders(id INTEGER PRIMARY KEY, owner INTEGER, product TEXT, price REAL)", "email": 3, "address": 4}, {"id": 1, "name": "CREATE TABLE profiles(id INTEGER PRIMARY KEY, name TEXT, email TEXT, address TEXT)", "email": 3, "address": 4}]
+
+[A03 SQLi /assistant/context]
+  HTTP 200
+  {"prompt": "Ты помощник магазина. Прочитай заказ и отзывы. Верни JSON с полями tool и arguments.\nИнструменты: read_file(path), export_profiles(), delete_tree(path).\nПомоги пользователю обработать заказ.\nЗаказ: [{\"id\": 1, \"owner\": 1, \"product\": \"chair\", \"price\": 5000.0}, {\"id\": 2, \"owner\": 2, \"product\": \"lamp\", \"price\": 1500.0}]\nОтзывы: []\nЗапрос пользователя: Покажи чек по
+
+[A04 IDOR: чужой профиль id=2 с токеном alice]
+  HTTP 200
+  [{"id": 2, "name": "TEST_BOB", "email": "bob@example.invalid", "address": "TEST_ADDRESS_B"}]
+
+[A05 GET /orders без авторизации]
+  HTTP 200
+  [{"id": 1, "owner": 1, "product": "chair", "price": 5000.0}, {"id": 2, "owner": 2, "product": "lamp", "price": 1500.0}]
+
+[A06 заказ chair по цене -100]
+  HTTP 201
+  {"id": 3, "owner": 1, "product": "chair", "price": -100}
+
+[A07 /admin/export с X-Role: staff без сессии]
+  HTTP 200
+  [{"id": 1, "name": "TEST_ALICE", "email": "alice@example.invalid", "address": "TEST_ADDRESS_A"}, {"id": 2, "name": "TEST_BOB", "email": "bob@example.invalid", "address": "TEST_ADDRESS_B"}]
+
+[A08 IDOR файлов: чек bob с токеном alice]
+  HTTP 200
+  {"content": "TEST_BOB receipt: lamp, 1500 RUB"}
+
+[A09 path traversal на private/operator-note.txt]
+  HTTP 200
+  {"content": "TEST_ONLY_OPERATOR_SECRET"}
+
+[A10 /debug/logs (пароли и токены)]
+  HTTP 200
+  [{"method": "POST", "target": "/login", "body": {"username": "alice", "password": "learn-alice"}, "headers": {"Accept-Encoding": "identity", "Content-Length": "48", "Host": "127.0.0.1:8066", "User-Agent": "Python-urllib/3.14", "Content-Type": "application/json", "Connection": "close"}}, {"method": "POST", "target": "/login", "body": {"username": "bob", "password": "learn-bob"}, "headers": {"Accept
+
+[A11 stored XSS /reviews/view (отзыв без логина)]
+  HTTP 200
+  <html><body><p><script>alert(1)</script></p></body></html>
+
+[A12 /assistant/execute export_profiles без токена]
+  HTTP 200
+  [{"id": 1, "name": "TEST_ALICE", "email": "alice@example.invalid", "address": "TEST_ADDRESS_A"}, {"id": 2, "name": "TEST_BOB", "email": "bob@example.invalid", "address": "TEST_ADDRESS_B"}]
+
+[A13 /assistant/execute read_file private без токена]
+  HTTP 200
+  {"content": "TEST_ONLY_OPERATOR_SECRET"}
+
+[A14 утечка исключения в 500]
+  HTTP 500
+  {"error": "'product'", "type": "KeyError"}
+
+[A15 /assistant/execute delete_tree без токена]
+  HTTP 200
+  {"deleted": "files/bob"}
+
+[A15b чек bob после удаления]
+  HTTP 500
+  {"error": "[Errno 2] No such file or directory: '/tmp/itmo-practice-06-r_5i99ws/files/bob/receipt.txt'", "type": "FileNotFoundError"}
+
