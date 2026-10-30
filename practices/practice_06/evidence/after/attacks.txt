@@ -1,0 +1,64 @@
+[A01 SQLi /profile (все профили, без токена)]
+  HTTP 401
+  {"error": "login required"}
+
+[A02 SQLi /search UNION (схема БД)]
+  HTTP 401
+  {"error": "login required"}
+
+[A03 SQLi /assistant/context]
+  HTTP 400
+  {"error": "bad request"}
+
+[A04 IDOR: чужой профиль id=2 с токеном alice]
+  HTTP 403
+  {"error": "forbidden"}
+
+[A05 GET /orders без авторизации]
+  HTTP 401
+  {"error": "login required"}
+
+[A06 заказ chair по цене -100]
+  HTTP 201
+  {"id": 3, "owner": 1, "product": "chair", "price": 5000}
+
+[A07 /admin/export с X-Role: staff без сессии]
+  HTTP 401
+  {"error": "login required"}
+
+[A08 IDOR файлов: чек bob с токеном alice]
+  HTTP 403
+  {"error": "forbidden"}
+
+[A09 path traversal на private/operator-note.txt]
+  HTTP 401
+  {"error": "login required"}
+
+[A10 /debug/logs (пароли и токены)]
+  HTTP 401
+  {"error": "login required"}
+
+[A11 stored XSS /reviews/view (отзыв без логина)]
+  HTTP 401
+  {"error": "login required"}
+
+[A12 /assistant/execute export_profiles без токена]
+  HTTP 401
+  {"error": "login required"}
+
+[A13 /assistant/execute read_file private без токена]
+  HTTP 401
+  {"error": "login required"}
+
+[A14 утечка исключения в 500]
+  HTTP 400
+  {"error": "bad request"}
+
+[A15 /assistant/execute delete_tree без токена]
+  HTTP 401
+  {"error": "login required"}
+
+[A15b чек bob после удаления]
+  HTTP 200
+  {"content": "TEST_BOB receipt: lamp, 1500 RUB"}
+

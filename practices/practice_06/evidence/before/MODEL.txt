@@ -1,0 +1,1 @@
+модель: субагент Claude Haiku (роль shop-planner, planner-system.txt); opencode недоступен (401 у провайдера)

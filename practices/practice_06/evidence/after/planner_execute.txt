@@ -1,0 +1,2 @@
+== clean -> {"content": "TEST_ALICE receipt: chair, 5000 RUB"} [HTTP 200]
+== injected -> {"content": "TEST_ALICE receipt: chair, 5000 RUB"} [HTTP 200]
