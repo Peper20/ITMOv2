@@ -1,0 +1,645 @@
+{
+  "name": "My workflow 84",
+  "nodes": [
+    {
+      "parameters": {
+        "owner": {
+          "__rl": true,
+          "value": "Peper20",
+          "mode": "list",
+          "cachedResultName": "Peper20",
+          "cachedResultUrl": "https://github.com/Peper20"
+        },
+        "repository": {
+          "__rl": true,
+          "value": "ITMOv2",
+          "mode": "list",
+          "cachedResultName": "ITMOv2",
+          "cachedResultUrl": "https://github.com/Peper20/ITMOv2"
+        },
+        "events": [
+          "issue_comment"
+        ],
+        "options": {}
+      },
+      "type": "n8n-nodes-base.githubTrigger",
+      "typeVersion": 1,
+      "position": [
+        0,
+        0
+      ],
+      "id": "6871587c-c7a7-45e6-81c4-e6783e9e07cc",
+      "name": "Github Trigger",
+      "webhookId": "123642ae-791a-45e7-b122-904adca35044",
+      "credentials": {
+        "githubApi": {
+          "id": "duMbjCA6hiv89spD",
+          "name": "GitHub account 77"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 4
+          },
+          "conditions": [
+            {
+              "id": "d7210498-bb6f-4a12-bf78-e231cfacf6ee",
+              "leftValue": "={{ $json.body.comment.body }}",
+              "rightValue": "/make_ai_review",
+              "operator": {
+                "type": "string",
+                "operation": "startsWith"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.4,
+      "position": [
+        224,
+        0
+      ],
+      "id": "73ad87b7-e362-4a0d-8881-32259d029b11",
+      "name": "If"
+    },
+    {
+      "parameters": {
+        "operation": "get",
+        "dataTableId": {
+          "__rl": true,
+          "value": "Wou0X5AitYczOqZJ",
+          "mode": "list",
+          "cachedResultName": "reviewed_prs",
+          "cachedResultUrl": "/projects/dpJJctc0O0Zdyw3G/datatables/Wou0X5AitYczOqZJ"
+        },
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "pr_id",
+              "keyValue": "={{ $json.body.issue.number }}"
+            }
+          ]
+        },
+        "returnAll": "={{ $json.body.issue.number }}"
+      },
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        448,
+        -96
+      ],
+      "id": "51d9ad9e-6e6b-488e-a766-7fc98f457a8c",
+      "name": "Get row(s)",
+      "alwaysOutputData": true
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 4
+          },
+          "conditions": [
+            {
+              "id": "d26636a8-b1b9-4fa5-be03-5c9357db86c1",
+              "leftValue": "={{ $json.pr_id }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "empty",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "looseTypeValidation": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.4,
+      "position": [
+        672,
+        -96
+      ],
+      "id": "a49e70a2-1382-4674-a8fd-5037c9c3831c",
+      "name": "If1"
+    },
+    {
+      "parameters": {
+        "operation": "createComment",
+        "owner": {
+          "__rl": true,
+          "value": "Peper20",
+          "mode": "list",
+          "cachedResultName": "Peper20",
+          "cachedResultUrl": "https://github.com/Peper20"
+        },
+        "repository": {
+          "__rl": true,
+          "value": "ITMOv2",
+          "mode": "list",
+          "cachedResultName": "ITMOv2",
+          "cachedResultUrl": "https://github.com/Peper20/ITMOv2"
+        },
+        "issueNumber": "={{ $('Github Trigger').item.json.body.issue.number }}",
+        "body": "Ревью для этого Pull Request уже было сделано."
+      },
+      "type": "n8n-nodes-base.github",
+      "typeVersion": 1.1,
+      "position": [
+        896,
+        32
+      ],
+      "id": "6b70d870-7071-4d24-8862-c8a217ff6536",
+      "name": "Create a comment on an issue",
+      "webhookId": "7ee95862-8a3b-4ea2-9df6-fa84e6285fc8",
+      "credentials": {
+        "githubApi": {
+          "id": "duMbjCA6hiv89spD",
+          "name": "GitHub account 77"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "pullRequest",
+        "operation": "getDiff",
+        "pullRequestNumber": "={{ $('Github Trigger').item.json.body.issue.number }}",
+        "owner": {
+          "__rl": true,
+          "value": "Peper20",
+          "mode": "list",
+          "cachedResultName": "Peper20",
+          "cachedResultUrl": "https://github.com/Peper20"
+        },
+        "repository": {
+          "__rl": true,
+          "value": "ITMOv2",
+          "mode": "list",
+          "cachedResultName": "ITMOv2",
+          "cachedResultUrl": "https://github.com/Peper20/ITMOv2"
+        }
+      },
+      "type": "n8n-nodes-base.github",
+      "typeVersion": 1.1,
+      "position": [
+        896,
+        -192
+      ],
+      "id": "6b96067c-ccba-4269-b30a-9d9c99eef8de",
+      "name": "Get a pull request diff",
+      "webhookId": "7070e8c7-a211-4682-9d21-a3e92ffa81b3",
+      "credentials": {
+        "githubApi": {
+          "id": "duMbjCA6hiv89spD",
+          "name": "GitHub account 77"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Ты — ассистент для код-ревью. Проанализируй следующий diff изменений в Pull Request и напиши развёрнутый комментарий с замечаниями, предложениями и указанием на возможные ошибки.\n\nВот diff:\n{{ $json.diff }}",
+        "batching": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.9,
+      "position": [
+        1120,
+        -192
+      ],
+      "id": "798f1f86-bcf6-4cb8-8801-068fc53bcd25",
+      "name": "Basic LLM Chain"
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "value": "qwen-3.8-flash",
+          "mode": "list",
+          "cachedResultName": "qwen-3.8-flash"
+        },
+        "responsesApiEnabled": false,
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.3,
+      "position": [
+        1120,
+        -48
+      ],
+      "id": "4ef6b880-4b3d-4279-b46c-686e552c1e4a",
+      "name": "OpenAI Chat Model",
+      "credentials": {
+        "openAiApi": {
+          "id": "uqzg0UM1otaeX92Q",
+          "name": "OpenAI account 71"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "createComment",
+        "owner": {
+          "__rl": true,
+          "value": "Peper20",
+          "mode": "list",
+          "cachedResultName": "Peper20",
+          "cachedResultUrl": "https://github.com/Peper20"
+        },
+        "repository": {
+          "__rl": true,
+          "value": "ITMOv2",
+          "mode": "list",
+          "cachedResultName": "ITMOv2",
+          "cachedResultUrl": "https://github.com/Peper20/ITMOv2"
+        },
+        "issueNumber": "={{ $('Github Trigger').item.json.body.issue.number }}",
+        "body": "=🤖 **AI Review (Qwen):**\n\n{{ $json.text }}"
+      },
+      "type": "n8n-nodes-base.github",
+      "typeVersion": 1.1,
+      "position": [
+        1488,
+        -192
+      ],
+      "id": "d260be55-44aa-46ca-803b-11e6f3229a33",
+      "name": "Create a comment on an issue1",
+      "webhookId": "8336fb3d-774e-4eca-9e6f-b213decfe313",
+      "credentials": {
+        "githubApi": {
+          "id": "duMbjCA6hiv89spD",
+          "name": "GitHub account 77"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "dataTableId": {
+          "__rl": true,
+          "value": "Wou0X5AitYczOqZJ",
+          "mode": "list",
+          "cachedResultName": "reviewed_prs",
+          "cachedResultUrl": "/projects/dpJJctc0O0Zdyw3G/datatables/Wou0X5AitYczOqZJ"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "pr_id": "={{ $('Github Trigger').item.json.body.issue.number }}"
+          },
+          "matchingColumns": [
+            "pr_id"
+          ],
+          "schema": [
+            {
+              "id": "pr_id",
+              "displayName": "pr_id",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "readOnly": false,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        1712,
+        -192
+      ],
+      "id": "eab082b1-e559-4825-9091-10af3e8730c8",
+      "name": "Insert row"
+    },
+    {
+      "parameters": {
+        "resource": "pullRequest",
+        "operation": "getDiff",
+        "pullRequestNumber": "={{ $('Github Trigger').item.json.body.issue.number }}",
+        "owner": {
+          "__rl": true,
+          "value": "Peper20",
+          "mode": "list",
+          "cachedResultName": "Peper20",
+          "cachedResultUrl": "https://github.com/Peper20"
+        },
+        "repository": {
+          "__rl": true,
+          "value": "ITMOv2",
+          "mode": "list",
+          "cachedResultName": "ITMOv2",
+          "cachedResultUrl": "https://github.com/Peper20/ITMOv2"
+        }
+      },
+      "type": "n8n-nodes-base.github",
+      "typeVersion": 1.1,
+      "position": [
+        688,
+        256
+      ],
+      "id": "39286e34-3c13-4bd1-8a6c-04ffbdfba1f1",
+      "name": "Get a pull request diff1",
+      "webhookId": "7070e8c7-a211-4682-9d21-a3e92ffa81b3",
+      "credentials": {
+        "githubApi": {
+          "id": "duMbjCA6hiv89spD",
+          "name": "GitHub account 77"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 4
+          },
+          "conditions": [
+            {
+              "id": "d7210498-bb6f-4a12-bf78-e231cfacf6ee",
+              "leftValue": "={{ $json.body.comment.body }}",
+              "rightValue": "/make_other_ai_review",
+              "operator": {
+                "type": "string",
+                "operation": "startsWith"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.4,
+      "position": [
+        448,
+        352
+      ],
+      "id": "db879d13-8314-4973-aa25-169a84eb7262",
+      "name": "If2"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Ты — ассистент для код-ревью. Проанализируй следующий diff изменений в Pull Request и напиши развёрнутый комментарий с замечаниями, предложениями и указанием на возможные ошибки.\n\nВот diff:\n{{ $json.diff }}",
+        "batching": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.9,
+      "position": [
+        896,
+        256
+      ],
+      "id": "af577f30-1809-4ddf-bd11-3dcb3e6b2fc2",
+      "name": "Basic LLM Chain1"
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "value": "deepseek-v4.1-flash",
+          "mode": "list",
+          "cachedResultName": "deepseek-v4.1-flash"
+        },
+        "responsesApiEnabled": false,
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.3,
+      "position": [
+        896,
+        400
+      ],
+      "id": "ace07360-f372-46b5-9886-357e930cdb2c",
+      "name": "OpenAI Chat Model1",
+      "credentials": {
+        "openAiApi": {
+          "id": "uqzg0UM1otaeX92Q",
+          "name": "OpenAI account 71"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "createComment",
+        "owner": {
+          "__rl": true,
+          "value": "Peper20",
+          "mode": "list",
+          "cachedResultName": "Peper20",
+          "cachedResultUrl": "https://github.com/Peper20"
+        },
+        "repository": {
+          "__rl": true,
+          "value": "ITMOv2",
+          "mode": "list",
+          "cachedResultName": "ITMOv2",
+          "cachedResultUrl": "https://github.com/Peper20/ITMOv2"
+        },
+        "issueNumber": "={{ $('Github Trigger').item.json.body.issue.number }}",
+        "body": "=🤖 **AI Review (Deepseek):**\n\n{{ $json.text }}"
+      },
+      "type": "n8n-nodes-base.github",
+      "typeVersion": 1.1,
+      "position": [
+        1264,
+        256
+      ],
+      "id": "d684799f-960d-40b6-8b22-a777bcf201ae",
+      "name": "Create a comment on an issue2",
+      "webhookId": "8336fb3d-774e-4eca-9e6f-b213decfe313",
+      "credentials": {
+        "githubApi": {
+          "id": "duMbjCA6hiv89spD",
+          "name": "GitHub account 77"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Github Trigger": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "Get row(s)",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "If2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get row(s)": {
+      "main": [
+        [
+          {
+            "node": "If1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If1": {
+      "main": [
+        [
+          {
+            "node": "Get a pull request diff",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Create a comment on an issue",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create a comment on an issue": {
+      "main": [
+        []
+      ]
+    },
+    "Get a pull request diff": {
+      "main": [
+        [
+          {
+            "node": "Basic LLM Chain",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Basic LLM Chain",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Basic LLM Chain": {
+      "main": [
+        [
+          {
+            "node": "Create a comment on an issue1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create a comment on an issue1": {
+      "main": [
+        [
+          {
+            "node": "Insert row",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If2": {
+      "main": [
+        [
+          {
+            "node": "Get a pull request diff1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Basic LLM Chain1": {
+      "main": [
+        [
+          {
+            "node": "Create a comment on an issue2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model1": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Basic LLM Chain1",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get a pull request diff1": {
+      "main": [
+        [
+          {
+            "node": "Basic LLM Chain1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "54b57e5b-c5f3-4e74-97e0-51d8dca55431",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "68dbbb4e8fa686c3fd4e9982ade6836edb66976f207553e7ac22df961581c78c"
+  },
+  "nodeGroups": [],
+  "id": "B1x3LhbJzJCqFoXk",
+  "tags": []
+}
