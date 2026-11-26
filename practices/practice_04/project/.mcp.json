@@ -1,0 +1,13 @@
+{
+  "mcpServers": {
+    "sqlite": {
+      "command": "python3",
+      "args": [".claude/mcp/sqlite_mcp.py"],
+      "env": { "DB_PATH": "data/app.db" }
+    },
+    "grepai": {
+      "command": "grepai",
+      "args": ["mcp-serve"]
+    }
+  }
+}

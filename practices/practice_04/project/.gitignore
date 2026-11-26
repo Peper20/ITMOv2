@@ -1,0 +1,12 @@
+__pycache__/
+*.pyc
+.venv/
+.env
+data/*.db
+data/*.db-*
+.claude/settings.local.json
+.grepai/
+frontend/node_modules/
+frontend/dist/
+# корневой .gitignore (Python-шаблон) игнорирует lib/ — возвращаем модули Svelte
+!frontend/src/lib/

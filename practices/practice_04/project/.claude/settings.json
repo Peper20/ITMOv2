@@ -1,0 +1,75 @@
+{
+  "permissions": {
+    "allow": [
+      "mcp__sqlite__db_schema",
+      "mcp__sqlite__db_query",
+      "mcp__grepai__grepai_search",
+      "mcp__grepai__grepai_trace_callers",
+      "mcp__grepai__grepai_trace_callees",
+      "mcp__grepai__grepai_trace_graph",
+      "mcp__grepai__grepai_index_status",
+      "Bash(grepai search:*)",
+      "Bash(grepai watch --status)",
+      "Bash(python3 -m unittest:*)",
+      "Bash(python3 backend/server.py:*)",
+      "Bash(pyright:*)"
+    ],
+    "deny": [
+      "Read(./.env)",
+      "Read(./.env.*)",
+      "Bash(rm -rf:*)"
+    ]
+  },
+  "enabledMcpjsonServers": [
+    "sqlite",
+    "grepai"
+  ],
+  "hooks": {
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "cd \"$CLAUDE_PROJECT_DIR\" && grepai watch --background >/dev/null 2>&1 || true",
+            "timeout": 15
+          }
+        ]
+      }
+    ],
+    "PreToolUse": [
+      {
+        "matcher": "Edit|Write|MultiEdit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 \"$CLAUDE_PROJECT_DIR/.claude/hooks/require_python_skill.py\"",
+            "timeout": 10
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write|MultiEdit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 \"$CLAUDE_PROJECT_DIR/.claude/hooks/lsp_diagnostics.py\"",
+            "timeout": 60
+          }
+        ]
+      },
+      {
+        "matcher": "Skill",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 \"$CLAUDE_PROJECT_DIR/.claude/hooks/require_python_skill.py\"",
+            "timeout": 10
+          }
+        ]
+      }
+    ]
+  },
+  "enabledPlugins": {}
+}
